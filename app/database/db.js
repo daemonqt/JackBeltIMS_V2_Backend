@@ -10,9 +10,9 @@ const mysql = require('mysql2');
 //online
 const db = mysql.createConnection({
     host: 'sql6.freemysqlhosting.net',
-    user: 'sql6680764',
-    password: 'mrtZgEyBqD',
-    database: 'sql6680764',
+    user: 'sql6684118',
+    password: 'aLpL5YMrFu',
+    database: 'sql6684118',
 });
 
 db.connect((err) => {
