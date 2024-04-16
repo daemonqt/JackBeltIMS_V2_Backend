@@ -49,6 +49,23 @@ router.get('/orders', authenticateToken, async (req, res) => {
     }
 });
 
+router.get('/orders/count', authenticateToken, async (req, res) => {
+    try {
+        db.query('SELECT COUNT(*) AS orderCount FROM orders', (err, result) => {
+            if (err) {
+                console.error('Error fetching order count:', err);
+                res.status(500).json({ message: 'Internal Server Error' });
+            } else {
+                const orderCount = result[0].orderCount;
+                res.status(200).json({ orderCount });
+            }
+        });
+    } catch (error) {
+        console.error('Error loading order count:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 router.get('/order/:id', authenticateToken, async (req, res) => {
     
     let order_id = req.params.id;
