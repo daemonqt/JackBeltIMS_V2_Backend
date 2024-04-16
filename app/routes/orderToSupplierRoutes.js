@@ -46,6 +46,23 @@ router.get('/purchaseorders', authenticateToken, async (req, res) => {
     }
 });
 
+router.get('/purchaseorders/count', authenticateToken, async (req, res) => {
+    try {
+        db.query('SELECT COUNT(*) AS purchaseorderCount FROM purchaseorders', (err, result) => {
+            if (err) {
+                console.error('Error fetching purchaseorder count:', err);
+                res.status(500).json({ message: 'Internal Server Error' });
+            } else {
+                const purchaseorderCount = result[0].purchaseorderCount;
+                res.status(200).json({ purchaseorderCount });
+            }
+        });
+    } catch (error) {
+        console.error('Error loading purchaseorder count:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 router.get('/purchaseorder/:id', authenticateToken, async (req, res) => {
     
     let purchaseorder_id = req.params.id;
