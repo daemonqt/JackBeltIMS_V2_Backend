@@ -42,6 +42,23 @@ router.get('/suppliers', authenticateToken, async (req, res) => {
     }
 });
 
+router.get('/suppliers/count', authenticateToken, async (req, res) => {
+    try {
+        db.query('SELECT COUNT(*) AS supplierCount FROM suppliers', (err, result) => {
+            if (err) {
+                console.error('Error fetching supplier count:', err);
+                res.status(500).json({ message: 'Internal Server Error' });
+            } else {
+                const supplierCount = result[0].supplierCount;
+                res.status(200).json({ supplierCount });
+            }
+        });
+    } catch (error) {
+        console.error('Error loading supplier count:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 router.get('/supplier/:id', authenticateToken, async (req, res) => {
     
     let supplier_id = req.params.id;
