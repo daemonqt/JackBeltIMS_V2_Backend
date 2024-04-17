@@ -11,7 +11,7 @@ router.post('/customer/register', async (req, res) => {
             
         const {name, username} = req.body;
 
-        const insertUserQuery = 'INSERT INTO customers (name, username) VALUES (?, ?)';
+        const insertUserQuery = 'INSERT INTO customers (name, username, ccreation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
         await db.promise().execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Customer registered successfully' });
@@ -25,7 +25,7 @@ router.post('/customer/register', async (req, res) => {
 router.get('/customers', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT customer_id, name, username FROM customers', (err, result) => {
+        db.query('SELECT customer_id, name, username, ccreation_date FROM customers', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -69,7 +69,7 @@ router.get('/customer/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT customer_id, name, username FROM customers WHERE customer_id = ?', customer_id, (err, result) => {
+        db.query('SELECT customer_id, name, username, ccreation_date FROM customers WHERE customer_id = ?', customer_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -98,7 +98,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE customers SET name = ?, username = ? WHERE customer_id = ?', [name, username, customer_id], (err, result, fields) => {
+        db.query('UPDATE customers SET name = ?, username = ?, ccreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE customer_id = ?', [name, username, customer_id], (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);
