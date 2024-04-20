@@ -11,7 +11,7 @@ router.post('/product/register', async (req, res) => {
             
         const {productName, productCode, productQuantity, productPrice} = req.body;
 
-        const insertUserQuery = 'INSERT INTO products (productName, productCode, productQuantity, productPrice) VALUES (?, ?, ?, ?)';
+        const insertUserQuery = 'INSERT INTO products (productName, productCode, productQuantity, productPrice, pcreation_date) VALUES (?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
         await db.promise().execute(insertUserQuery, [productName, productCode, productQuantity, productPrice]);
 
         res.status(201).json({ message: 'Product registered successfully' });
@@ -25,7 +25,7 @@ router.post('/product/register', async (req, res) => {
 router.get('/products', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice FROM products', (err, result) => {
+        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice, pcreation_date FROM products', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -69,7 +69,7 @@ router.get('/product/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT productName, productCode, productQuantity, productPrice FROM products WHERE product_id = ?', product_id, (err, result) => {
+        db.query('SELECT productName, productCode, productQuantity, productPrice, pcreation_date FROM products WHERE product_id = ?', product_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -98,7 +98,7 @@ router.put('/product/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE products SET productName = ?, productCode = ?, productQuantity = ?, productPrice = ? WHERE product_id = ?', [productName, productCode, productQuantity, productPrice, product_id], (err, result, fields) => {
+        db.query('UPDATE products SET productName = ?, productCode = ?, productQuantity = ?, productPrice = ?, pcreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE product_id = ?', [productName, productCode, productQuantity, productPrice, product_id], (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);

@@ -12,7 +12,7 @@ router.post('/user/register', async (req, res) => {
         const {name, username, password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const insertUserQuery = 'INSERT INTO users (name, username, password) VALUES (?, ?, ?)';
+        const insertUserQuery = 'INSERT INTO users (name, username, password, ucreation_date) VALUES (?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
         await db.promise().execute(insertUserQuery, [name, username, hashedPassword]);
 
         res.status(201).json({ message: 'User registered successfully' });
@@ -53,7 +53,7 @@ router.post('/user/login', async (req, res) => {
 router.get('/users', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT user_id, name, username FROM users', (err, result) => {
+        db.query('SELECT user_id, name, username, ucreation_date FROM users', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -97,7 +97,7 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT user_id, name, username FROM users WHERE user_id = ?', user_id, (err, result) => {
+        db.query('SELECT user_id, name, username, ucreation_date FROM users WHERE user_id = ?', user_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -127,7 +127,7 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE users SET name = ?, username = ?, password = ? WHERE user_id = ?', [name, username, hashedPassword, user_id], (err, result, fields) => {
+        db.query('UPDATE users SET name = ?, username = ?, password = ?, ucreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE user_id = ?', [name, username, hashedPassword, user_id], (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);
