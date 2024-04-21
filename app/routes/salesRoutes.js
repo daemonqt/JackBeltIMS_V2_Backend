@@ -9,6 +9,7 @@ router.get('/sales', authenticateToken, async (req, res) => {
             SELECT SUM(o.orderQuantity * p.productPrice) AS total_sales 
             FROM orders o 
             JOIN products p ON o.product_id = p.product_id
+            WHERE o.orderStatus != 'PENDING'
         `;
         db.query(totalSalesQuery, (err, result) => {
             if (err) {
@@ -31,6 +32,7 @@ router.get('/sales-by-products', authenticateToken, async (req, res) => {
             SELECT p.product_id, p.productName, SUM(o.orderQuantity * p.productPrice) AS total_sales
             FROM orders o
             JOIN products p ON o.product_id = p.product_id
+            WHERE o.orderStatus != 'PENDING'
             GROUP BY p.product_id, p.productName;
         `;
         db.query(salesByProductsQuery, (err, result) => {
