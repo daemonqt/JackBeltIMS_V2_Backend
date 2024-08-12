@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
-// const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
 const db = require('../database/db.js');
-// const secretKey = require('../secretkey/secretkey.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/supplier/register', async (req, res) => {
@@ -25,7 +22,7 @@ router.post('/supplier/register', async (req, res) => {
 router.get('/suppliers', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT supplier_id, name, username, screation_date FROM suppliers', (err, result) => {
+        db.query('SELECT supplier_id, name, username, screation_date FROM suppliers ORDER BY screation_date DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -38,23 +35,6 @@ router.get('/suppliers', authenticateToken, async (req, res) => {
     } catch (error) {
 
         console.error('Error loading suppliers:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-router.get('/suppliers/count', authenticateToken, async (req, res) => {
-    try {
-        db.query('SELECT COUNT(*) AS supplierCount FROM suppliers', (err, result) => {
-            if (err) {
-                console.error('Error fetching supplier count:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                const supplierCount = result[0].supplierCount;
-                res.status(200).json({ supplierCount });
-            }
-        });
-    } catch (error) {
-        console.error('Error loading supplier count:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

@@ -1,19 +1,20 @@
 const mysql = require('mysql2');
 //offline
-// const db = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: '',
-//     database: 'lascano_invmsystem',
-// });
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'lascano_invmsystem',
+});
 
 //online
-const db = mysql.createConnection({
-    host: 'sql6.freemysqlhosting.net',
-    user: 'sql6684118',
-    password: 'aLpL5YMrFu',
-    database: 'sql6684118',
-});
+// const db = mysql.createConnection({
+//     host: 'sql6.freemysqlhosting.net',
+//     user: 'sql6684118',
+//     password: 'aLpL5YMrFu',
+//     database: 'sql6684118',
+//     timezone: 'Asia/Manila',
+// });
 
 db.connect((err) => {
 

@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
-// const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
 const db = require('../database/db.js');
-// const secretKey = require('../secretkey/secretkey.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/product/register', async (req, res) => {
@@ -25,7 +22,7 @@ router.post('/product/register', async (req, res) => {
 router.get('/products', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice, pcreation_date FROM products', (err, result) => {
+        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice, pcreation_date FROM products ORDER BY pcreation_date DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -42,23 +39,6 @@ router.get('/products', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/products/count', authenticateToken, async (req, res) => {
-    try {
-        db.query('SELECT COUNT(*) AS productCount FROM products', (err, result) => {
-            if (err) {
-                console.error('Error fetching product count:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                const productCount = result[0].productCount;
-                res.status(200).json({ productCount });
-            }
-        });
-    } catch (error) {
-        console.error('Error loading product count:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
 router.get('/product/:id', authenticateToken, async (req, res) => {
     
     let product_id = req.params.id;
@@ -69,7 +49,7 @@ router.get('/product/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT productName, productCode, productQuantity, productPrice, pcreation_date FROM products WHERE product_id = ?', product_id, (err, result) => {
+        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice, pcreation_date FROM products WHERE product_id = ?', product_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);

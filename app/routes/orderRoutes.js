@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
-// const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
 const db = require('../database/db.js');
-// const secretKey = require('../secretkey/secretkey.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/order/register', async (req, res) => {
@@ -32,7 +29,7 @@ router.post('/order/register', async (req, res) => {
 router.get('/orders', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, orderDatenTime FROM orders', (err, result) => {
+        db.query('SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, orderDatenTime FROM orders ORDER BY orderDatenTime DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -49,23 +46,6 @@ router.get('/orders', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/orders/count', authenticateToken, async (req, res) => {
-    try {
-        db.query('SELECT COUNT(*) AS orderCount FROM orders', (err, result) => {
-            if (err) {
-                console.error('Error fetching order count:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                const orderCount = result[0].orderCount;
-                res.status(200).json({ orderCount });
-            }
-        });
-    } catch (error) {
-        console.error('Error loading order count:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
 router.get('/order/:id', authenticateToken, async (req, res) => {
     
     let order_id = req.params.id;
@@ -76,7 +56,7 @@ router.get('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, orderDatenTime FROM orders WHERE order_id = ?', order_id, (err, result) => {
+        db.query('SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, orderDatenTime FROM orders WHERE order_id = ?', order_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);

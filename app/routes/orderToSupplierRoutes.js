@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
-// const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
 const db = require('../database/db.js');
-// const secretKey = require('../secretkey/secretkey.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/purchaseorder/register', async (req, res) => {
@@ -29,7 +26,7 @@ router.post('/purchaseorder/register', async (req, res) => {
 router.get('/purchaseorders', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT purchaseorder_id, supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id, soldDatenTime FROM purchaseorders', (err, result) => {
+        db.query('SELECT purchaseorder_id, supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id, soldDatenTime FROM purchaseorders ORDER BY soldDatenTime DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -46,23 +43,6 @@ router.get('/purchaseorders', authenticateToken, async (req, res) => {
     }
 });
 
-router.get('/purchaseorders/count', authenticateToken, async (req, res) => {
-    try {
-        db.query('SELECT COUNT(*) AS purchaseorderCount FROM purchaseorders', (err, result) => {
-            if (err) {
-                console.error('Error fetching purchaseorder count:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                const purchaseorderCount = result[0].purchaseorderCount;
-                res.status(200).json({ purchaseorderCount });
-            }
-        });
-    } catch (error) {
-        console.error('Error loading purchaseorder count:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
 router.get('/purchaseorder/:id', authenticateToken, async (req, res) => {
     
     let purchaseorder_id = req.params.id;
@@ -73,7 +53,7 @@ router.get('/purchaseorder/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id, soldDatenTime FROM purchaseorders WHERE purchaseorder_id = ?', purchaseorder_id, (err, result) => {
+        db.query('SELECT purchaseorder_id, supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id, soldDatenTime FROM purchaseorders WHERE purchaseorder_id = ?', purchaseorder_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);

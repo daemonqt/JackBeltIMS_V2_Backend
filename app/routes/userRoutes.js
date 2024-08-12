@@ -41,7 +41,7 @@ router.post('/user/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        const token = jwt.sign({ userId: user.id, username: user.username }, secretKey, { expiresIn: '10h' });
+        const token = jwt.sign({ userId: user.id, username: user.username, name: user.name }, secretKey, { expiresIn: '10h' });
 
         res.status(200).json({ token });
     } catch (error) {
@@ -53,7 +53,7 @@ router.post('/user/login', async (req, res) => {
 router.get('/users', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT user_id, name, username, ucreation_date FROM users', (err, result) => {
+        db.query('SELECT user_id, name, username, ucreation_date FROM users ORDER BY ucreation_date DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -66,23 +66,6 @@ router.get('/users', authenticateToken, async (req, res) => {
     } catch (error) {
 
         console.error('Error loading users:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-router.get('/users/count', authenticateToken, async (req, res) => {
-    try {
-        db.query('SELECT COUNT(*) AS userCount FROM users', (err, result) => {
-            if (err) {
-                console.error('Error fetching user count:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                const userCount = result[0].userCount;
-                res.status(200).json({ userCount });
-            }
-        });
-    } catch (error) {
-        console.error('Error loading user count:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
