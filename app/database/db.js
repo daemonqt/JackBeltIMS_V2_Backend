@@ -1,20 +1,19 @@
 const mysql = require('mysql2');
-//offline
+
+// const db = mysql.createConnection({
+//     host: 'c008q.h.filess.io',
+//     user: 'JackBeltIMS_viewspider',
+//     password: '25e27960f8989ba524997282ae1f9a731e4878ee',
+//     database: 'JackBeltIMS_viewspider',
+//     port: '3305',
+// });
+
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
     database: 'lascano_invmsystem',
 });
-
-//online
-// const db = mysql.createConnection({
-//     host: 'sql6.freemysqlhosting.net',
-//     user: 'sql6684118',
-//     password: 'aLpL5YMrFu',
-//     database: 'sql6684118',
-//     timezone: 'Asia/Manila',
-// });
 
 db.connect((err) => {
 
