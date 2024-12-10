@@ -4,16 +4,21 @@ const db = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/supplier/register', async (req, res) => {
-    try{
-            
-        const {name, username} = req.body;
+    try {
+        const { name, username } = req.body;
+
+        const checkUserQuery = 'SELECT * FROM suppliers WHERE username = ?';
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
+
+        if (existingUser .length > 0) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
 
         const insertUserQuery = 'INSERT INTO suppliers (name, username, screation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
         await db.promise().execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Supplier registered successfully' });
     } catch (error) {
-        
         console.error('Error registering Supplier:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -67,33 +72,30 @@ router.get('/supplier/:id', authenticateToken, async (req, res) => {
 });
 
 router.put('/supplier/:id', authenticateToken, async (req, res) => {
-
     let supplier_id = req.params.id;
-
-    const {name, username} = req.body;
+    const { name, username } = req.body;
 
     if (!supplier_id || !name || !username) {
-        return req.status(400).send({ error: user, message: 'Please provide name and username' });  
+        return res.status(400).send({ error: true, message: 'Please provide name and username' });
     }
 
     try {
+        
+        const checkUserQuery = 'SELECT * FROM suppliers WHERE username = ? AND supplier_id != ?';
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username, supplier_id]);
 
-        db.query('UPDATE suppliers SET name = ?, username = ?, screation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE supplier_id = ?', [name, username, supplier_id], (err, result, fields) => {
+        if (existingUser .length > 0) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
 
-            if (err) {
-                console.error('Error updating items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
+        const updateUserQuery = 'UPDATE suppliers SET name = ?, username = ?, screation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE supplier_id = ?';
+        await db.promise().execute(updateUserQuery, [name, username, supplier_id]);
 
+        res.status(200).json({ message: 'Supplier updated successfully' });
     } catch (error) {
-
-        console.error('Error loading supplier:', error);
+        console.error('Error updating supplier:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-    
 });
 
 router.delete('/supplier/:id', authenticateToken, async (req, res) => {
