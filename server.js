@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+const roleRoutes = require('./app/routes/roleRoutes.js')
 const userRoutes = require('./app/routes/userRoutes.js');
 const productRoutes = require('./app/routes/productRoutes.js');
 const customerRoutes = require('./app/routes/customerRoutes.js');
@@ -17,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use('/api', userRoutes, customerRoutes, productRoutes, supplierRoutes, orderRoutes, orderToSupplierRoutes, salesRoutes, inventoryRoutes, freshproductRoutes, dashboardRoutes );
+app.use('/api', roleRoutes, userRoutes, customerRoutes, productRoutes, supplierRoutes, orderRoutes, orderToSupplierRoutes, salesRoutes, inventoryRoutes, freshproductRoutes, dashboardRoutes );
 
 const PORT = process.env.PORT || 3001;
 
