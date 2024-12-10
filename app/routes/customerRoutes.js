@@ -4,16 +4,21 @@ const db = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/customer/register', async (req, res) => {
-    try{
-            
+    try{   
         const {name, username} = req.body;
+
+        const checkUserQuery = 'SELECT * FROM customers WHERE username = ?';
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
+
+        if (existingUser .length > 0) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
 
         const insertUserQuery = 'INSERT INTO customers (name, username, ccreation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
         await db.promise().execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Customer registered successfully' });
     } catch (error) {
-        
         console.error('Error registering customer:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -67,30 +72,28 @@ router.get('/customer/:id', authenticateToken, async (req, res) => {
 });
 
 router.put('/customer/:id', authenticateToken, async (req, res) => {
-
     let customer_id = req.params.id;
-
     const {name, username} = req.body;
 
     if (!customer_id || !name || !username) {
-        return req.status(400).send({ error: user, message: 'Please provide name and username' });  
+        return res.status(400).send({ error: true, message: 'Please provide name and username' });  
     }
 
     try {
 
-        db.query('UPDATE customers SET name = ?, username = ?, ccreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE customer_id = ?', [name, username, customer_id], (err, result, fields) => {
+        const checkUserQuery = 'SELECT * FROM customers WHERE username = ? AND customer_id != ?';
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username, customer_id]);
 
-            if (err) {
-                console.error('Error updating items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
+        if (existingUser .length > 0) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
 
+        const updateUserQuery = 'UPDATE customers SET name = ?, username = ?, ccreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE customer_id = ?';
+        await db.promise().execute(updateUserQuery, [name, username, customer_id]);
+
+        res.status(200).json({ message: 'Customer updated successfully' });
     } catch (error) {
-
-        console.error('Error loading customer:', error);
+        console.error('Error updating customer:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
     
