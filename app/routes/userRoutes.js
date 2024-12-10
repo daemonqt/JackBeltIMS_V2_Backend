@@ -9,11 +9,18 @@ const authenticateToken = require('../authenticator/authentication.js');
 router.post('/user/register', async (req, res) => {
     try{
             
-        const {name, username, password} = req.body;
+        const {name, username, role_id, password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const insertUserQuery = 'INSERT INTO users (name, username, password, ucreation_date) VALUES (?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
-        await db.promise().execute(insertUserQuery, [name, username, hashedPassword]);
+        const checkUserQuery = 'SELECT * FROM users WHERE username = ?';
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
+
+        if (existingUser .length > 0) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
+
+        const insertUserQuery = 'INSERT INTO users (name, username, role_id, password, ucreation_date) VALUES (?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
+        await db.promise().execute(insertUserQuery, [name, username, role_id, hashedPassword]);
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
@@ -41,7 +48,7 @@ router.post('/user/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        const token = jwt.sign({ userId: user.id, username: user.username, name: user.name }, secretKey, { expiresIn: '10h' });
+        const token = jwt.sign({ user_id: user.user_id, username: user.username, name: user.name, role_id: user.role_id }, secretKey, { expiresIn: '10h' });
 
         res.status(200).json({ token });
     } catch (error) {
@@ -53,7 +60,7 @@ router.post('/user/login', async (req, res) => {
 router.get('/users', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT user_id, name, username, ucreation_date FROM users ORDER BY ucreation_date DESC', (err, result) => {
+        db.query('SELECT user_id, role_id, name, username, ucreation_date FROM users ORDER BY ucreation_date DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -80,7 +87,7 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT user_id, name, username, ucreation_date FROM users WHERE user_id = ?', user_id, (err, result) => {
+        db.query('SELECT user_id, role_id, name, username, password, ucreation_date FROM users WHERE user_id = ?', user_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -101,31 +108,30 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
 
     let user_id = req.params.id;
 
-    const {name, username, password} = req.body;
+    const {name, username, role_id, password} = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (!user_id || !name || !username || !password) {
-        return req.status(400).send({ error: user, message: 'Please provide name, username and password' });  
+    if (!user_id || !name || !username || !role_id || !password) {
+        return req.status(400).send({ error: user, message: 'Please provide name, username, role_id and password' });  
     }
 
     try {
 
-        db.query('UPDATE users SET name = ?, username = ?, password = ?, ucreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE user_id = ?', [name, username, hashedPassword, user_id], (err, result, fields) => {
+        const checkUserQuery = 'SELECT * FROM users WHERE username = ? AND user_id != ?';
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username, user_id]);
 
-            if (err) {
-                console.error('Error updating items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
+        if (existingUser .length > 0) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
 
+        const updateUserQuery = 'UPDATE users SET name = ?, username = ?, password = ?, role_id =?, ucreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE user_id = ?';
+        await db.promise().execute(updateUserQuery, [name, username, hashedPassword, role_id, user_id]);
+
+        res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
-
-        console.error('Error loading user:', error);
+        console.error('Error updating user:', error);
         res.status(500).json({ error: 'Internal Server Error' });
-    }
-    
+    }   
 });
 
 router.delete('/user/:id', authenticateToken, async (req, res) => {
