@@ -7,6 +7,10 @@ router.post('/product/register', async (req, res) => {
     try{
         const {productName, productCode, productQuantity, productPrice} = req.body;
 
+        if (isNaN(productQuantity) || typeof productQuantity !== 'number') {
+            return res.status(400).json({ error: 'Quantity should be a number' });
+        }
+
         const checkUserQuery = 'SELECT * FROM products WHERE productCode = ?';
         const [existingUser ] = await db.promise().execute(checkUserQuery, [productCode]);
 
@@ -78,6 +82,10 @@ router.put('/product/:id', authenticateToken, async (req, res) => {
     if (!product_id || !productName || !productCode || !productQuantity || !productPrice) {
         return res.status(400).send({ error: user, message: 'Please provide productName, productCode, productQuantity and productPrice' });  
     }
+
+    if (isNaN(productQuantity) || typeof productQuantity !== 'number') {
+            return res.status(400).json({ error: 'Quantity should be a number' });
+        }
 
     try {
 

@@ -8,9 +8,12 @@ router.post('/fresh-products/register', async (req, res) => {
 
         const { product_id, freshproductQuantity, user_id  } = req.body;
 
+        if (isNaN(freshproductQuantity) || typeof freshproductQuantity !== 'number') {
+            return res.status(400).json({ error: 'Quantity should be a number' });
+        }
+
         const insertUserQuery = 'INSERT INTO freshproducts (product_id, freshproductQuantity, user_id, dateManufactured) VALUES (?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
-        const [insertFreshProductResult] = await db.promise().execute(insertUserQuery, [product_id, freshproductQuantity, user_id]);
-        const freshproduct_id = insertFreshProductResult.insertId;
+        await db.promise().execute(insertUserQuery, [product_id, freshproductQuantity, user_id]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?';
         await db.promise().execute(updateQuantityQuery, [freshproductQuantity, product_id]);
@@ -75,6 +78,10 @@ router.put('/fresh-products/:id', authenticateToken, async (req, res) => {
     let freshproduct_id = req.params.id;
 
     const {product_id, freshproductQuantity, user_id} = req.body;
+
+    if (isNaN(freshproductQuantity) || typeof freshproductQuantity !== 'number') {
+        return res.status(400).json({ error: 'Quantity should be a number' });
+    }
 
     if (!freshproduct_id || !product_id || !freshproductQuantity || !user_id) {
         return req.status(400).send({ error: user, message: 'Please provide product_id, freshproductQuantity and user_id' });  
