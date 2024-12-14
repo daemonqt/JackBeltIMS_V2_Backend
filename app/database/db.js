@@ -1,19 +1,19 @@
 const mysql = require('mysql2');
 
-// const db = mysql.createConnection({
-//     host: 'c008q.h.filess.io',
-//     user: 'JackBeltIMS_viewspider',
-//     password: '25e27960f8989ba524997282ae1f9a731e4878ee',
-//     database: 'JackBeltIMS_viewspider',
-//     port: '3305',
-// });
-
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'lascano_invmsystem',
+    host: 'fmpp5.h.filess.io',
+    user: 'JackBeltIMS_swamistell',
+    password: '05787a2b27a3668501a8cd51d0a1a160539a529d',
+    database: 'JackBeltIMS_swamistell',
+    port: '3305',
 });
+
+// const db = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
+//     database: 'lascano_invmsystem',
+// });
 
 db.connect((err) => {
 
