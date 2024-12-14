@@ -11,7 +11,7 @@ router.post('/customer/register', async (req, res) => {
         const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
 
         if (existingUser .length > 0) {
-            return res.status(409).json({ message: 'Username already exists' });
+            return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
         const insertUserQuery = 'INSERT INTO customers (name, username, ccreation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
@@ -85,7 +85,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
         const [existingUser ] = await db.promise().execute(checkUserQuery, [username, customer_id]);
 
         if (existingUser .length > 0) {
-            return res.status(409).json({ message: 'Username already exists' });
+            return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
         const updateUserQuery = 'UPDATE customers SET name = ?, username = ?, ccreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE customer_id = ?';

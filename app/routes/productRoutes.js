@@ -6,9 +6,14 @@ const authenticateToken = require('../authenticator/authentication.js');
 router.post('/product/register', async (req, res) => {
     try{
         const {productName, productCode, productQuantity, productPrice} = req.body;
-
-        if (isNaN(productQuantity) || typeof productQuantity !== 'number') {
-            return res.status(400).json({ error: 'Quantity should be a number' });
+    
+        const quantity = Number(productQuantity);
+        const price = Number(productPrice);
+        if (isNaN(quantity) || productQuantity === '' || productQuantity === null || quantity < 0) {
+            return res.status(400).json({ error: 'Product quantity must be a number greaterthan or equal to zero.' });
+        }
+        if (isNaN(price) || productPrice === '' || productPrice === null || price < 0) {
+            return res.status(400).json({ error: 'Product price must be a number greaterthan or equal to zero.' });
         }
 
         const checkUserQuery = 'SELECT * FROM products WHERE productCode = ?';
@@ -79,13 +84,18 @@ router.put('/product/:id', authenticateToken, async (req, res) => {
     let product_id = req.params.id;
     const {productName, productCode, productQuantity, productPrice} = req.body;
 
-    if (!product_id || !productName || !productCode || !productQuantity || !productPrice) {
-        return res.status(400).send({ error: user, message: 'Please provide productName, productCode, productQuantity and productPrice' });  
+    if (!product_id || !productName || !productCode || productQuantity === undefined || productPrice === undefined) {
+        return res.status(400).send({ error: true, message: 'Please provide productName, productCode, productQuantity, and productPrice' });
     }
 
-    if (isNaN(productQuantity) || typeof productQuantity !== 'number') {
-            return res.status(400).json({ error: 'Quantity should be a number' });
-        }
+    const quantity = Number(productQuantity);
+    const price = Number(productPrice);
+    if (isNaN(quantity) || productQuantity === '' || productQuantity === null || quantity < 0) {
+        return res.status(400).json({ error: 'Product quantity must be a number greaterthan or equal to zero.' });
+    }
+    if (isNaN(price) || productPrice === '' || productPrice === null || price < 0) {
+        return res.status(400).json({ error: 'Product price must be a number greaterthan or equal to zero.' });
+    }
 
     try {
 

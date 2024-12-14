@@ -8,8 +8,9 @@ router.post('/fresh-products/register', async (req, res) => {
 
         const { product_id, freshproductQuantity, user_id  } = req.body;
 
-        if (isNaN(freshproductQuantity) || typeof freshproductQuantity !== 'number') {
-            return res.status(400).json({ error: 'Quantity should be a number' });
+        const quantity = Number(freshproductQuantity);
+        if (isNaN(quantity) || freshproductQuantity === '' || freshproductQuantity === null || quantity < 0) {
+            return res.status(400).json({ error: 'Quantity must be a number greaterthan zero.' });
         }
 
         const insertUserQuery = 'INSERT INTO freshproducts (product_id, freshproductQuantity, user_id, dateManufactured) VALUES (?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
@@ -79,12 +80,13 @@ router.put('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     const {product_id, freshproductQuantity, user_id} = req.body;
 
-    if (isNaN(freshproductQuantity) || typeof freshproductQuantity !== 'number') {
-        return res.status(400).json({ error: 'Quantity should be a number' });
+    if (!freshproduct_id || !product_id || freshproductQuantity === undefined || !user_id) {
+        return req.status(400).send({ error: user, message: 'Please provide product_id, freshproductQuantity and user_id' });  
     }
 
-    if (!freshproduct_id || !product_id || !freshproductQuantity || !user_id) {
-        return req.status(400).send({ error: user, message: 'Please provide product_id, freshproductQuantity and user_id' });  
+    const quantity = Number(freshproductQuantity);
+    if (isNaN(quantity) || freshproductQuantity === '' || freshproductQuantity === null || quantity < 0) {
+        return res.status(400).json({ error: 'Quantity must be a number greaterthan zero.' });
     }
 
     try {

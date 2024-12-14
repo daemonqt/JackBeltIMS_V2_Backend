@@ -11,7 +11,7 @@ router.post('/supplier/register', async (req, res) => {
         const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
 
         if (existingUser .length > 0) {
-            return res.status(409).json({ message: 'Username already exists' });
+            return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
         const insertUserQuery = 'INSERT INTO suppliers (name, username, screation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
@@ -85,7 +85,7 @@ router.put('/supplier/:id', authenticateToken, async (req, res) => {
         const [existingUser ] = await db.promise().execute(checkUserQuery, [username, supplier_id]);
 
         if (existingUser .length > 0) {
-            return res.status(409).json({ message: 'Username already exists' });
+            return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
         const updateUserQuery = 'UPDATE suppliers SET name = ?, username = ?, screation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE supplier_id = ?';

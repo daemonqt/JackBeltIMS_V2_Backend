@@ -9,8 +9,9 @@ router.post('/purchaseorder/register', async (req, res) => {
         const { supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id } = req.body;
 
         const insertUserQuery = 'INSERT INTO purchaseorders (supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id, soldDatenTime) VALUES (?, ?, ?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
-        const [insertPurchaseResult] = await db.promise().execute(insertUserQuery, [supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id]);
-        const purchaseorder_id = insertPurchaseResult.insertId;
+        // const [insertPurchaseResult] = 
+        await db.promise().execute(insertUserQuery, [supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id]);
+        // const purchaseorder_id = insertPurchaseResult.insertId;
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?';
         await db.promise().execute(updateQuantityQuery, [purchaseQuantity, product_id]);

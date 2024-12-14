@@ -94,7 +94,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
                 
                 const updatePriceQuery = 'UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?';
                 await db.promise().execute(updatePriceQuery, [product_id, order_id]);
-                res.status(200).json(result);
+                res.status(200).json({ message: 'Order updated successfully', result });
             }
         });
 
@@ -122,7 +122,7 @@ router.delete('/order/:id', authenticateToken, async (req, res) => {
                 console.error('Error deleting items:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
             } else {
-                res.status(200).json(result);
+                res.status(200).json({ message: 'Order deleted successfully', result });
             }
         });
 
