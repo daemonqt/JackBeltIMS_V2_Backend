@@ -34,7 +34,12 @@ router.post('/user/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const getUserQuery = 'SELECT * FROM users WHERE username = ?';
+        const getUserQuery = `
+            SELECT u.*, r.rolename
+            FROM users u
+            JOIN roles r ON u.role_id = r.role_id
+            WHERE u.username = ?
+        `;
         const [rows] = await db.promise().execute(getUserQuery, [username]);
 
         if (rows.length === 0) {
@@ -48,9 +53,18 @@ router.post('/user/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        const token = jwt.sign({ user_id: user.user_id, username: user.username, name: user.name, role_id: user.role_id }, secretKey, { expiresIn: '10h' });
-
-        res.status(200).json({ token });
+        const token = jwt.sign(
+            {
+                user_id: user.user_id,
+                username: user.username,
+                name: user.name,
+                role_id: user.role_id,
+                rolename: user.rolename
+            },
+            secretKey,
+            { expiresIn: '10h' }
+        );
+        res.status(200).json({ token, role: user.rolename });
     } catch (error) {
         console.error('Error logging in user:', error);
         res.status(500).json({ error: 'Internal Server Error' });
