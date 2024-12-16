@@ -10,9 +10,9 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
                 p.productName AS Product, 
                 p.productCode AS ProductCode,
                 p.productType AS ProductType,
-                COALESCE(p.productQuantity, 0) - COALESCE(o.orderQuantity, 0) + COALESCE(f.freshproductQuantity, 0) AS InitialQuantity,
+                COALESCE(p.productQuantity, 0) - COALESCE(SUM(o.orderQuantity), 0) + COALESCE(SUM(f.freshproductQuantity), 0) AS InitialQuantity,
                 p.productQuantity AS CountedQuantity, 
-                p.productQuantity - (COALESCE(p.productQuantity, 0) - COALESCE(o.orderQuantity, 0) + COALESCE(f.freshproductQuantity, 0)) AS Discrepancy
+                p.productQuantity - (COALESCE(p.productQuantity, 0) - COALESCE(SUM(o.orderQuantity), 0) + COALESCE(SUM(f.freshproductQuantity), 0)) AS Discrepancy
             FROM 
                 products p
             LEFT JOIN 
