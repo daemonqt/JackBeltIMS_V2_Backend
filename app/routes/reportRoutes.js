@@ -12,7 +12,7 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
                 p.productType AS ProductType,
                 COALESCE(p.productQuantity, 0) - COALESCE(o.orderQuantity, 0) + COALESCE(f.freshproductQuantity, 0) AS InitialQuantity,
                 p.productQuantity AS CountedQuantity, 
-                COALESCE(p.productQuantity, 0) - (COALESCE(p.productQuantity, 0) - COALESCE(o.orderQuantity, 0) + COALESCE(f.freshproductQuantity, 0)) AS Discrepancy
+                p.productQuantity - (COALESCE(p.productQuantity, 0) - COALESCE(o.orderQuantity, 0) + COALESCE(f.freshproductQuantity, 0)) AS Discrepancy
             FROM 
                 products p
             LEFT JOIN 
@@ -21,6 +21,7 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
                 freshproducts f ON p.product_id = f.product_id
             GROUP BY 
                 p.productType, p.product_id, p.productName, p.productCode, p.productQuantity;
+
         `;
         
         db.query(inventoryReportQuery, (err, result) => {
