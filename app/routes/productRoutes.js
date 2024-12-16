@@ -5,7 +5,7 @@ const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/product/register', async (req, res) => {
     try{
-        const {productName, productCode, productQuantity, productPrice} = req.body;
+        const {productName, productCode, productType, productQuantity, productPrice} = req.body;
     
         const quantity = Number(productQuantity);
         const price = Number(productPrice);
@@ -23,8 +23,8 @@ router.post('/product/register', async (req, res) => {
             return res.status(409).json({ message: 'Product code already exists' });
         }
 
-        const insertUserQuery = 'INSERT INTO products (productName, productCode, productQuantity, productPrice, pcreation_date) VALUES (?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
-        await db.promise().execute(insertUserQuery, [productName, productCode, productQuantity, productPrice]);
+        const insertUserQuery = 'INSERT INTO products (productName, productCode, productType, productQuantity, productPrice, pcreation_date) VALUES (?, ?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
+        await db.promise().execute(insertUserQuery, [productName, productCode, productType, productQuantity, productPrice]);
 
         res.status(201).json({ message: 'Product registered successfully' });
     } catch (error) {
@@ -36,7 +36,7 @@ router.post('/product/register', async (req, res) => {
 router.get('/products', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice, pcreation_date FROM products ORDER BY pcreation_date DESC', (err, result) => {
+        db.query('SELECT product_id, productName, productCode, productType, productQuantity, productPrice, pcreation_date FROM products ORDER BY pcreation_date DESC', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -63,7 +63,7 @@ router.get('/product/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT product_id, productName, productCode, productQuantity, productPrice, pcreation_date FROM products WHERE product_id = ?', product_id, (err, result) => {
+        db.query('SELECT product_id, productName, productCode, productType, productQuantity, productPrice, pcreation_date FROM products WHERE product_id = ?', product_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -82,7 +82,7 @@ router.get('/product/:id', authenticateToken, async (req, res) => {
 
 router.put('/product/:id', authenticateToken, async (req, res) => {
     let product_id = req.params.id;
-    const {productName, productCode, productQuantity, productPrice} = req.body;
+    const {productName, productCode, productType, productQuantity, productPrice} = req.body;
 
     if (!product_id || !productName || !productCode || productQuantity === undefined || productPrice === undefined) {
         return res.status(400).send({ error: true, message: 'Please provide productName, productCode, productQuantity, and productPrice' });
@@ -106,7 +106,7 @@ router.put('/product/:id', authenticateToken, async (req, res) => {
             return res.status(409).json({ message: 'Product code already exists' });
         }
 
-        const updateUserQuery = 'UPDATE products SET productName = ?, productCode = ?, productQuantity = ?, productPrice = ?, pcreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE product_id = ?';
+        const updateUserQuery = 'UPDATE products SET productName = ?, productCode = ?, productType = ?, productQuantity = ?, productPrice = ?, pcreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE product_id = ?';
         await db.promise().execute(updateUserQuery, [productName, productCode, productQuantity, productPrice, product_id]);
 
         res.status(200).json({ message: 'Product updated successfully' });
