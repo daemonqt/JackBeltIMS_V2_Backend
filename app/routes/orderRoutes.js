@@ -85,7 +85,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, orderDatenTime = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
+        db.query('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ? WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);

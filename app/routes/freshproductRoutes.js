@@ -91,7 +91,7 @@ router.put('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE freshproducts SET product_id = ?, freshproductQuantity = ?, user_id = ?, dateManufactured = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE freshproduct_id = ?', [product_id, freshproductQuantity, user_id, freshproduct_id], async (err, result, fields) => {
+        db.query('UPDATE freshproducts SET product_id = ?, freshproductQuantity = ?, user_id = ? WHERE freshproduct_id = ?', [product_id, freshproductQuantity, user_id, freshproduct_id], async (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);
