@@ -13,13 +13,14 @@ const salesRoutes = require('./app/routes/salesRoutes.js');
 const inventoryRoutes = require('./app/routes/inventoryRoutes.js');
 const freshproductRoutes = require('./app/routes/freshproductRoutes.js');
 const dashboardRoutes = require('./app/routes/dashboardRoutes.js');
+const chartRoutes = require("./app/routes/chartsData.js");
 const reportRoutes = require('./app/routes/reportRoutes.js');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use('/api', roleRoutes, userRoutes, customerRoutes, productRoutes, supplierRoutes, orderRoutes, orderToSupplierRoutes, salesRoutes, inventoryRoutes, freshproductRoutes, dashboardRoutes, reportRoutes );
+app.use('/api', roleRoutes, userRoutes, customerRoutes, productRoutes, supplierRoutes, orderRoutes, orderToSupplierRoutes, salesRoutes, inventoryRoutes, freshproductRoutes, dashboardRoutes, chartRoutes, reportRoutes );
 
 const PORT = process.env.PORT || 3001;
 
