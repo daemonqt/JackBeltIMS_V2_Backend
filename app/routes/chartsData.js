@@ -155,7 +155,7 @@ router.get("/product-revenue", authenticateToken, async (req, res) => {
       FROM orders o
       JOIN products p ON o.product_id = p.product_id
       WHERE o.orderStatus != 'PENDING'
-      GROUP BY p.productName
+      GROUP BY p.productName, p.productPrice
       ORDER BY totalRevenue DESC;
     `;
 
