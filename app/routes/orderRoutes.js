@@ -5,22 +5,21 @@ const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/order/register', async (req, res) => {
     try {
-
         const { customer_id, product_id, orderQuantity, orderStatus, user_id } = req.body;
 
-        const insertUserQuery = 'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, orderDatenTime) VALUES (?, ?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
-        const [insertOrderResult] = await db.promise().execute(insertUserQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id]);
-        const order_id = insertOrderResult.insertId;
+        // Calculate priceInTotal
+        const [product] = await db.promise().query('SELECT productPrice FROM products WHERE product_id = ?', [product_id]);
+        const productPrice = product[0].productPrice;
+        const priceInTotal = orderQuantity * productPrice;
 
-        const updatePriceQuery = 'UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?';
-        await db.promise().execute(updatePriceQuery, [product_id, order_id]);
+        const insertOrderQuery = 'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, orderDatenTime, priceInTotal) VALUES (?, ?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"), ?)';
+        await db.promise().execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?';
         await db.promise().execute(updateQuantityQuery, [orderQuantity, product_id]);
 
         res.status(201).json({ message: 'Order registered successfully, updated products' });
     } catch (error) {
-
         console.error('Error registering order:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
