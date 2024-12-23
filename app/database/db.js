@@ -21,7 +21,7 @@ const db = mysql.createConnection({
 //     host: 'localhost',
 //     user: 'root',
 //     password: '',
-//     database: 'lascano_invmsystem',
+//     database: 'populator',
 // });
 
 db.connect((err) => {
