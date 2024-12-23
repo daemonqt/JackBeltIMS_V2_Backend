@@ -6,22 +6,33 @@ const authenticateToken = require('../authenticator/authentication.js');
 router.get('/report/inventory', authenticateToken, async (req, res) => {
     try {
         const inventoryReportQuery = `
-            SELECT 
+            SELECT
                 p.productName AS Product, 
                 p.productCode AS ProductCode,
                 p.productType AS ProductType,
-                COALESCE(p.productQuantity, 0) - COALESCE(SUM(o.orderQuantity), 0) + COALESCE(SUM(f.freshproductQuantity), 0) AS InitialQuantity,
-                p.productQuantity AS CountedQuantity, 
-                p.productQuantity - (COALESCE(p.productQuantity, 0) - COALESCE(SUM(o.orderQuantity), 0) + COALESCE(SUM(f.freshproductQuantity), 0)) AS Discrepancy
+                p.productQuantity + COALESCE(o.OrderQ, 0) - COALESCE(f.FreshQ, 0) - COALESCE(po.PurchaseQ, 0) AS InitialQuantity,
+                COALESCE(f.FreshQ, 0) + COALESCE(po.PurchaseQ, 0) AS AddedStock,
+                COALESCE(o.OrderQ, 0) AS UnitSold,
+                p.productQuantity AS CountedQuantity,
+                p.productQuantity - (p.productQuantity + COALESCE(o.OrderQ, 0) - COALESCE(f.FreshQ, 0) - COALESCE(po.PurchaseQ, 0)) AS Discrepancy
             FROM 
                 products p
             LEFT JOIN 
-                orders o ON p.product_id = o.product_id AND o.orderStatus != 'PENDING'
+                (SELECT product_id, COALESCE(SUM(orderQuantity), 0) AS OrderQ
+                FROM orders
+                GROUP BY product_id) o ON p.product_id = o.product_id
             LEFT JOIN 
-                freshproducts f ON p.product_id = f.product_id
+                (SELECT product_id, COALESCE(SUM(freshproductQuantity), 0) AS FreshQ
+                FROM freshproducts
+                GROUP BY product_id) f ON p.product_id = f.product_id
+            LEFT JOIN 
+                (SELECT product_id, COALESCE(SUM(purchaseQuantity), 0) AS PurchaseQ
+                FROM purchaseorders
+                GROUP BY product_id) po ON p.product_id = po.product_id
             GROUP BY 
-                p.productType, p.product_id, p.productName, p.productCode, p.productQuantity;
-
+                p.product_id, p.productName, p.productCode, p.productType, p.productQuantity
+            ORDER BY
+                ProductType DESC, ProductCode;
         `;
         
         db.query(inventoryReportQuery, (err, result) => {
@@ -53,7 +64,9 @@ router.get('/report/overallsale', authenticateToken, async (req, res) => {
             LEFT JOIN 
                 orders o ON p.product_id = o.product_id AND o.orderStatus != 'PENDING'
             GROUP BY 
-                p.productType, p.product_id, p.productName, p.productCode, p.productPrice, p.productQuantity;
+                p.product_id, p.productName, p.productCode, p.productType, p.productPrice, p.productQuantity
+            ORDER BY
+                ProductType DESC, ProductCode;
         `;
         
         db.query(salesReportQuery, (err, result) => {
