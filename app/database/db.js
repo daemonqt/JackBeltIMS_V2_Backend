@@ -10,11 +10,12 @@ const mysql = require('mysql2');
 
 //onlineDB
 const db = mysql.createConnection({
-    host: 'mysql-186603-0.cloudclusters.net',
-    user: 'admin',
-    password: 'eoeiBuZJ',
-    database: 'jackbeltims',
-    port: '10121',
+  host: "mysql-186603-0.cloudclusters.net",
+  user: "admin",
+  password: "eoeiBuZJ",
+  database: "jackbeltims",
+  port: "10121",
+  timezone: "+08:00",
 });
 
 // const db = mysql.createConnection({
