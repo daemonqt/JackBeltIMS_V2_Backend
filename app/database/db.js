@@ -16,6 +16,8 @@ const db = mysql.createConnection({
   database: "jackbeltims",
   port: "10121",
   timezone: "+08:00",
+  waitForConnections: true,
+  keepAliveInitialDelay: 10000,
 });
 
 // const db = mysql.createConnection({
