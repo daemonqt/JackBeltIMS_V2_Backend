@@ -19,7 +19,8 @@ router.post('/user/register', async (req, res) => {
             return res.status(409).json({ message: 'Username already exists' });
         }
 
-        const insertUserQuery = 'INSERT INTO users (name, username, role_id, password, ucreation_date) VALUES (?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
+        const insertUserQuery =
+          'INSERT INTO users (name, username, role_id, password, timestamp_add, timestamp_update) VALUES (?, ?, ?, ?, NOW(), NOW())';
         await db.promise().execute(insertUserQuery, [name, username, role_id, hashedPassword]);
 
         res.status(201).json({ message: 'User registered successfully' });
@@ -74,15 +75,17 @@ router.post('/user/login', async (req, res) => {
 router.get('/users', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT user_id, role_id, name, username, ucreation_date FROM users ORDER BY ucreation_date DESC', (err, result) => {
-
+        db.query(
+          "SELECT user_id, role_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM users ORDER BY timestamp_update DESC",
+          (err, result) => {
             if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
+              console.error("Error fetching items:", err);
+              res.status(500).json({ message: "Internal Server Error" });
             } else {
-                res.status(200).json(result);
+              res.status(200).json(result);
             }
-        });
+          }
+        );
 
     } catch (error) {
 
@@ -101,15 +104,18 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT user_id, role_id, name, username, password, ucreation_date FROM users WHERE user_id = ?', user_id, (err, result) => {
-
+        db.query(
+          "SELECT user_id, role_id, name, username, password,  DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM users WHERE user_id = ?",
+          user_id,
+          (err, result) => {
             if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
+              console.error("Error fetching items:", err);
+              res.status(500).json({ message: "Internal Server Error" });
             } else {
-                res.status(200).json(result);
+              res.status(200).json(result);
             }
-        });
+          }
+        );
 
     } catch (error) {
 
@@ -138,7 +144,8 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
             return res.status(409).json({ message: 'Username already exists' });
         }
 
-        const updateUserQuery = 'UPDATE users SET name = ?, username = ?, password = ?, role_id =?, ucreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE user_id = ?';
+        const updateUserQuery =
+          'UPDATE users SET name = ?, username = ?, password = ?, role_id =?, timestamp_update = NOW() WHERE user_id = ?';
         await db.promise().execute(updateUserQuery, [name, username, hashedPassword, role_id, user_id]);
 
         res.status(200).json({ message: 'User updated successfully' });

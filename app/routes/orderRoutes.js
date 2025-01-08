@@ -12,7 +12,8 @@ router.post('/order/register', async (req, res) => {
         const productPrice = product[0].productPrice;
         const priceInTotal = orderQuantity * productPrice;
 
-        const insertOrderQuery = 'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, orderDatenTime, priceInTotal) VALUES (?, ?, ?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"), ?)';
+        const insertOrderQuery =
+          'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, timestamp_add, timestamp_update, priceInTotal) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)';
         await db.promise().execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?';
@@ -28,7 +29,9 @@ router.post('/order/register', async (req, res) => {
 router.get('/orders', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, orderDatenTime FROM orders ORDER BY orderDatenTime DESC', (err, result) => {
+        db.query(
+            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders ORDER BY timestamp_update DESC", 
+            (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -55,7 +58,10 @@ router.get('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, orderDatenTime FROM orders WHERE order_id = ?', order_id, (err, result) => {
+        db.query(
+            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders WHERE order_id = ?", 
+            order_id, 
+            (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -84,7 +90,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ? WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
+        db.query('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);

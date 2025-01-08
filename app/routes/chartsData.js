@@ -8,7 +8,7 @@ router.get("/seasonality-data", authenticateToken, async (req, res) => {
   try {
     const seasonalityQuery = `
       SELECT p.productName, 
-             MONTH(STR_TO_DATE(o.orderDatenTime, '%m-%d-%Y %h:%i %p')) AS month, 
+             MONTH(o.timestamp_update) AS month, 
              SUM(o.orderQuantity) AS totalQuantity
       FROM orders o
       JOIN products p ON o.product_id = p.product_id
@@ -50,12 +50,12 @@ router.get("/daily-sales", authenticateToken, async (req, res) => {
   try {
     const dailySalesQuery = `
       SELECT 
-        DATE_FORMAT(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p'), '%Y-%m-%d') AS date,
+        DATE_FORMAT(timestamp_update, '%m-%d-%Y') AS date,
         SUM(orderQuantity) AS totalQuantity
       FROM orders
       WHERE orderStatus != 'PENDING'
-        AND YEAR(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p')) = YEAR(CURDATE())
-        AND MONTH(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p')) = MONTH(CURDATE())
+        AND YEAR(timestamp_update) = YEAR(CURDATE())
+        AND MONTH(timestamp_update) = MONTH(CURDATE())
       GROUP BY date
       ORDER BY date;
     `;
@@ -84,11 +84,11 @@ router.get("/monthly-sales", authenticateToken, async (req, res) => {
   try {
     const monthlySalesQuery = `
       SELECT 
-        DATE_FORMAT(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p'), '%Y-%m') AS month,
+        DATE_FORMAT(timestamp_update, '%Y-%m') AS month,
         SUM(orderQuantity) AS totalQuantity
       FROM orders
       WHERE orderStatus != 'PENDING'
-        AND YEAR(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p')) = YEAR(CURDATE())
+        AND YEAR(timestamp_update) = YEAR(CURDATE())
       GROUP BY month
       ORDER BY month;
     `;
@@ -117,11 +117,11 @@ router.get("/yearly-sales", authenticateToken, async (req, res) => {
   try {
     const yearlySalesQuery = `
       SELECT 
-        YEAR(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p')) AS year,
+        YEAR(timestamp_update) AS year,
         SUM(orderQuantity) AS totalQuantity
       FROM orders
       WHERE orderStatus != 'PENDING'
-        AND YEAR(STR_TO_DATE(orderDatenTime, '%m-%d-%Y %h:%i %p')) BETWEEN YEAR(CURDATE()) - 4 AND YEAR(CURDATE())
+        AND YEAR(timestamp_update) BETWEEN YEAR(CURDATE()) - 4 AND YEAR(CURDATE())
       GROUP BY year
       ORDER BY year;
     `;

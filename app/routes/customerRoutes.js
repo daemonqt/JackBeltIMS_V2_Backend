@@ -14,7 +14,8 @@ router.post('/customer/register', async (req, res) => {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
-        const insertUserQuery = 'INSERT INTO customers (name, username, ccreation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
+        const insertUserQuery =
+          "INSERT INTO customers (name, username, timestamp_add, timestamp_update) VALUES (?, ?, NOW(), NOW())";
         await db.promise().execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Customer registered successfully' });
@@ -27,15 +28,17 @@ router.post('/customer/register', async (req, res) => {
 router.get('/customers', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT customer_id, name, username, ccreation_date FROM customers', (err, result) => {
-
+        db.query(
+          "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers ORDER BY timestamp_update DESC",
+          (err, result) => {
             if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
+              console.error("Error fetching items:", err);
+              res.status(500).json({ message: "Internal Server Error" });
             } else {
-                res.status(200).json(result);
+              res.status(200).json(result);
             }
-        });
+          }
+        );
 
     } catch (error) {
 
@@ -54,15 +57,18 @@ router.get('/customer/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT customer_id, name, username, ccreation_date FROM customers WHERE customer_id = ?', customer_id, (err, result) => {
-
+        db.query(
+          "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers WHERE customer_id = ?",
+          customer_id,
+          (err, result) => {
             if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
+              console.error("Error fetching items:", err);
+              res.status(500).json({ message: "Internal Server Error" });
             } else {
-                res.status(200).json(result);
+              res.status(200).json(result);
             }
-        });
+          }
+        );
 
     } catch (error) {
 
@@ -88,7 +94,8 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
-        const updateUserQuery = 'UPDATE customers SET name = ?, username = ?, ccreation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE customer_id = ?';
+        const updateUserQuery =
+          "UPDATE customers SET name = ?, username = ?, timestamp_update = NOW() WHERE customer_id = ?";
         await db.promise().execute(updateUserQuery, [name, username, customer_id]);
 
         res.status(200).json({ message: 'Customer updated successfully' });

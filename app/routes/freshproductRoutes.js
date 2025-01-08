@@ -13,7 +13,8 @@ router.post('/fresh-products/register', async (req, res) => {
             return res.status(400).json({ error: 'Quantity must be a number greaterthan zero.' });
         }
 
-        const insertUserQuery = 'INSERT INTO freshproducts (product_id, freshproductQuantity, user_id, dateManufactured) VALUES (?, ?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
+        const insertUserQuery =
+          'INSERT INTO freshproducts (product_id, freshproductQuantity, user_id, timestamp_add, timestamp_update) VALUES (?, ?, ?, NOW(), NOW())';
         await db.promise().execute(insertUserQuery, [product_id, freshproductQuantity, user_id]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?';
@@ -30,7 +31,9 @@ router.post('/fresh-products/register', async (req, res) => {
 router.get('/fresh-products', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT freshproduct_id, product_id, freshproductQuantity, user_id, dateManufactured FROM freshproducts ORDER BY dateManufactured DESC', (err, result) => {
+        db.query(
+            "SELECT freshproduct_id, product_id, freshproductQuantity, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM freshproducts ORDER BY timestamp_update DESC", 
+            (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -57,7 +60,10 @@ router.get('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT freshproduct_id, product_id, freshproductQuantity, user_id, dateManufactured FROM freshproducts WHERE freshproduct_id = ?', freshproduct_id, (err, result) => {
+        db.query(
+            "SELECT freshproduct_id, product_id, freshproductQuantity, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM freshproducts WHERE freshproduct_id = ?", 
+            freshproduct_id, 
+            (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -91,7 +97,7 @@ router.put('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE freshproducts SET product_id = ?, freshproductQuantity = ?, user_id = ? WHERE freshproduct_id = ?', [product_id, freshproductQuantity, user_id, freshproduct_id], async (err, result, fields) => {
+        db.query('UPDATE freshproducts SET product_id = ?, freshproductQuantity = ?, user_id = ?, timestamp_update = NOW() WHERE freshproduct_id = ?', [product_id, freshproductQuantity, user_id, freshproduct_id], async (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);

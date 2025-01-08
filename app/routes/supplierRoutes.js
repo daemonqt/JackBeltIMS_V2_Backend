@@ -14,7 +14,7 @@ router.post('/supplier/register', async (req, res) => {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
-        const insertUserQuery = 'INSERT INTO suppliers (name, username, screation_date) VALUES (?, ?, DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p"))';
+        const insertUserQuery = 'INSERT INTO suppliers (name, username, timestamp_add, timestamp_update) VALUES (?, ?, NOW(), NOW())';
         await db.promise().execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Supplier registered successfully' });
@@ -27,15 +27,17 @@ router.post('/supplier/register', async (req, res) => {
 router.get('/suppliers', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT supplier_id, name, username, screation_date FROM suppliers ORDER BY screation_date DESC', (err, result) => {
-
+        db.query(
+          "SELECT supplier_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM suppliers ORDER BY timestamp_update DESC",
+          (err, result) => {
             if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
+              console.error("Error fetching items:", err);
+              res.status(500).json({ message: "Internal Server Error" });
             } else {
-                res.status(200).json(result);
+              res.status(200).json(result);
             }
-        });
+          }
+        );
 
     } catch (error) {
 
@@ -54,15 +56,18 @@ router.get('/supplier/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT supplier_id, name, username, screation_date FROM suppliers WHERE supplier_id = ?', supplier_id, (err, result) => {
-
+        db.query(
+          "SELECT supplier_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM suppliers WHERE supplier_id = ?",
+          supplier_id,
+          (err, result) => {
             if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
+              console.error("Error fetching items:", err);
+              res.status(500).json({ message: "Internal Server Error" });
             } else {
-                res.status(200).json(result);
+              res.status(200).json(result);
             }
-        });
+          }
+        );
 
     } catch (error) {
 
@@ -88,7 +93,7 @@ router.put('/supplier/:id', authenticateToken, async (req, res) => {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
         }
 
-        const updateUserQuery = 'UPDATE suppliers SET name = ?, username = ?, screation_date = DATE_FORMAT(NOW(), "%m-%d-%Y %h:%i %p") WHERE supplier_id = ?';
+        const updateUserQuery = 'UPDATE suppliers SET name = ?, username = ?, timestamp_update = NOW() WHERE supplier_id = ?';
         await db.promise().execute(updateUserQuery, [name, username, supplier_id]);
 
         res.status(200).json({ message: 'Supplier updated successfully' });
