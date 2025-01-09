@@ -113,10 +113,11 @@ router.put('/product/:id', authenticateToken, async (req, res) => {
         }
 
         const updateUserQuery = 'UPDATE products SET productName = ?, productCode = ?, productType = ?, productQuantity = ?, productPrice = ?, timestamp_update = NOW() WHERE product_id = ?';
-        await db.promise().execute(updateUserQuery, [productName, productCode, productQuantity, productPrice, product_id]);
+        await db.promise().execute(updateUserQuery, [productName, productCode, productType, productQuantity, productPrice, product_id]);
 
         res.status(200).json({ message: 'Product updated successfully' });
     } catch (error) {
+
         console.error('Error updating product:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
