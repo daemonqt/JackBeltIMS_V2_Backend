@@ -13,7 +13,7 @@ router.post('/user/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const checkUserQuery = 'SELECT * FROM users WHERE username = ?';
-        const [existingUser ] = await db.execute(checkUserQuery, [username]);
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Username already exists' });
@@ -21,7 +21,7 @@ router.post('/user/register', async (req, res) => {
 
         const insertUserQuery =
           'INSERT INTO users (name, username, role_id, password, timestamp_add, timestamp_update) VALUES (?, ?, ?, ?, NOW(), NOW())';
-        await db.execute(insertUserQuery, [name, username, role_id, hashedPassword]);
+        await db.promise().execute(insertUserQuery, [name, username, role_id, hashedPassword]);
 
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
@@ -41,7 +41,7 @@ router.post('/user/login', async (req, res) => {
             JOIN roles r ON u.role_id = r.role_id
             WHERE u.username = ?
         `;
-        const [rows] = await db.execute(getUserQuery, [username]);
+        const [rows] = await db.promise().execute(getUserQuery, [username]);
 
         if (rows.length === 0) {
             return res.status(401).json({ error: 'Invalid username or password' });
@@ -138,7 +138,7 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
     try {
 
         const checkUserQuery = 'SELECT * FROM users WHERE username = ? AND user_id != ?';
-        const [existingUser ] = await db.execute(checkUserQuery, [username, user_id]);
+        const [existingUser ] = await db.promise().execute(checkUserQuery, [username, user_id]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Username already exists' });
@@ -146,7 +146,7 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
 
         const updateUserQuery =
           'UPDATE users SET name = ?, username = ?, password = ?, role_id =?, timestamp_update = NOW() WHERE user_id = ?';
-        await db.execute(updateUserQuery, [name, username, hashedPassword, role_id, user_id]);
+        await db.promise().execute(updateUserQuery, [name, username, hashedPassword, role_id, user_id]);
 
         res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
