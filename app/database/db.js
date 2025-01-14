@@ -21,13 +21,13 @@ const db = mysql.createPool({
 //   database: "populator",
 // });
 
-db.connect((err) => {
+// db.connect((err) => {
 
-    if (err) {
-        console.error('Error connecting to MySQL:', err);
-    } else {
-        console.log('Connected to MySQL');
-    }
-});
+//     if (err) {
+//         console.error('Error connecting to MySQL:', err);
+//     } else {
+//         console.log('Connected to MySQL');
+//     }
+// });
 
 module.exports = db;
