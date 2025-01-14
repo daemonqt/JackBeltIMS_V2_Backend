@@ -111,6 +111,93 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
     
 });
 
+// router.put('/order/:id', authenticateToken, async (req, res) => {
+//     const order_id = req.params.id;
+//     const { customer_id, product_id: newProductId, orderQuantity: newOrderQuantity, orderStatus, user_id } = req.body;
+
+//     if (!order_id || !customer_id || !newProductId || !newOrderQuantity || !orderStatus || !user_id) {
+//         return res.status(400).json({
+//             error: true,
+//             message: 'Please provide customer_id, product_id, orderQuantity, orderStatus, and user_id',
+//         });
+//     }
+
+//     const connection = await db.promise().getConnection();
+
+//     try {
+//         // Start transaction
+//         await connection.beginTransaction();
+
+//         // Step 1: Retrieve the old product_id and orderQuantity
+//         const [oldOrder] = await connection.query(
+//             `SELECT product_id AS oldProductId, orderQuantity AS oldOrderQuantity FROM orders WHERE order_id = ?`,
+//             [order_id]
+//         );
+
+//         if (oldOrder.length === 0) {
+//             throw new Error('Order not found');
+//         }
+
+//         const { oldProductId, oldOrderQuantity } = oldOrder[0];
+
+//         // Step 2: Restore old product quantity only if the product_id has changed
+//         if (oldProductId !== newProductId) {
+//             await connection.query(
+//                 `UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?`,
+//                 [oldOrderQuantity, oldProductId]
+//             );
+
+//             // Deduct the new order quantity from the new product
+//             await connection.query(
+//                 `UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?`,
+//                 [newOrderQuantity, newProductId]
+//             );
+//         } else {
+//             // Update the product quantity for the same product
+//             const quantityDifference = newOrderQuantity - oldOrderQuantity;
+//             await connection.query(
+//                 `UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?`,
+//                 [quantityDifference, oldProductId]
+//             );
+//         }
+
+//         // Step 3: Update the order details
+//         await connection.query(
+//             `UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?`,
+//             [customer_id, newProductId, newOrderQuantity, orderStatus, user_id, order_id]
+//         );
+
+//         // Step 4: Recalculate and update the price
+//         const [newProduct] = await connection.query(
+//             `SELECT productPrice FROM products WHERE product_id = ?`,
+//             [newProductId]
+//         );
+
+//         if (newProduct.length === 0) {
+//             throw new Error('New product not found');
+//         }
+
+//         const newPriceInTotal = newOrderQuantity * newProduct[0].productPrice;
+
+//         await connection.query(
+//             `UPDATE orders SET priceInTotal = ? WHERE order_id = ?`,
+//             [newPriceInTotal, order_id]
+//         );
+
+//         // Commit the transaction
+//         await connection.commit();
+//         res.status(200).json({ message: 'Order updated successfully' });
+//     } catch (error) {
+//         // Rollback the transaction on error
+//         await connection.rollback();
+//         console.error('Error updating order:', error);
+//         res.status(500).json({ error: 'Internal Server Error' });
+//     } finally {
+//         // Release the connection
+//         connection.release();
+//     }
+// });
+
 router.delete('/order/:id', authenticateToken, async (req, res) => {
     
     let order_id = req.params.id;
