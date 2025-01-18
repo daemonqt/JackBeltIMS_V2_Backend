@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database/db.js');
+const connection = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/customer/register', async (req, res) => {
-    try{   
-        const {name, username} = req.body;
+    try{
+        const db = await connection(); 
+        const { name, username } = req.body;
 
         const checkUserQuery = 'SELECT * FROM customers WHERE username = ?';
         const [existingUser ] = await db.execute(checkUserQuery, [username]);
@@ -25,55 +26,38 @@ router.post('/customer/register', async (req, res) => {
     }
 });
 
-router.get('/customers', authenticateToken, async (req, res) => {
+router.get("/customers", authenticateToken, async (req, res) => {
     try {
-
-        db.execute(
-          "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers ORDER BY timestamp_update DESC",
-          (err, result) => {
-            if (err) {
-              console.error("Error fetching items:", err);
-              res.status(500).json({ message: "Internal Server Error" });
-            } else {
-              res.status(200).json(result);
-            }
-          }
+        const db = await connection();
+        const [results] = await db.execute(
+            "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers ORDER BY timestamp_update DESC"
         );
-
+        res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading customers:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading customers:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
-router.get('/customer/:id', authenticateToken, async (req, res) => {
-    
+router.get("/customer/:id", authenticateToken, async (req, res) => {
     let customer_id = req.params.id;
 
     if (!customer_id) {
-        return req.status(400).send({ error: true, message: 'Please provide customer_id' });  
+        return req
+        .status(400)
+        .send({ error: true, message: "Please provide customer_id" });
     }
 
     try {
-
-        db.execute(
-          "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers WHERE customer_id = ?",
-          customer_id,
-          (err, result) => {
-            if (err) {
-              console.error("Error fetching items:", err);
-              res.status(500).json({ message: "Internal Server Error" });
-            } else {
-              res.status(200).json(result);
-            }
-          }
+        const db = await connection();
+        const [results] = await db.execute(
+            "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers WHERE customer_id = ?",
+            [customer_id]
         );
-
+        res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading customer:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading customer:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
@@ -86,7 +70,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
     }
 
     try {
-
+        const db = await connection();
         const checkUserQuery = 'SELECT * FROM customers WHERE username = ? AND customer_id != ?';
         const [existingUser ] = await db.execute(checkUserQuery, [username, customer_id]);
 
@@ -103,33 +87,24 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
         console.error('Error updating customer:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-    
 });
 
-router.delete('/customer/:id', authenticateToken, async (req, res) => {
-    
+router.delete("/customer/:id", authenticateToken, async (req, res) => {
     let customer_id = req.params.id;
 
     if (!customer_id) {
-        return res.status(400).send({ error: true, message: 'Please provide customer_id' });  
+        return res
+        .status(400)
+        .send({ error: true, message: "Please provide customer_id" });
     }
 
     try {
-
-        db.execute('DELETE FROM customers WHERE customer_id = ?', customer_id, (err, result, fields) => {
-
-            if (err) {
-                console.error('Error deleting items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
-
+        const db = await connection();
+        await db.execute("DELETE FROM customers WHERE customer_id = ?", [customer_id]);
+        res.status(200).json({ message: "Customer deleted successfully" });
     } catch (error) {
-
-        console.error('Error loading customer:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error deleting customer:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 

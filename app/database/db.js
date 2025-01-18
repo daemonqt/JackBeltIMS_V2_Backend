@@ -1,37 +1,31 @@
-const mysql = require("mysql2/promise");
+const mysql = require('mysql2/promise');
 
-//onlineDB
-const dbConfig = {
-  host: "mysql-186603-0.cloudclusters.net",
-  user: "admin",
-  password: "eoeiBuZJ",
-  database: "jackbeltims",
-  port: "10121",
-  timezone: "+08:00",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  keepAliveInitialDelay: 10000,
+// Online
+const connection = async () => {
+  const pool = await mysql.createPool({
+    host: "mysql-186603-0.cloudclusters.net",
+    user: "admin",
+    password: "eoeiBuZJ",
+    database: "jackbeltims",
+    port: "10121",
+    timezone: "+08:00",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 10,
+    keepAliveInitialDelay: 10000,
+  });
+  return pool;
 };
 
-// const dbConfig = {
-//   host: "localhost",
-//   user: "root",
-//   password: "",
-//   database: "populator",
+// Offline
+// const connection = async () => {
+//   const pool = await mysql.createPool({
+//     host: "localhost",
+//     user: "root",
+//     password: "",
+//     database: "populator",
+//   });
+//   return pool;
 // };
 
-async function createPool() {
-  try {
-    const pool = await mysql.createPool(dbConfig);
-    console.log("Pool created");
-    return pool;
-  } catch (error) {
-    console.error("Error creating pool:", error);
-    throw error;
-  }
-}
-
-const db = createPool();
-
-module.exports = db;
+module.exports = connection;

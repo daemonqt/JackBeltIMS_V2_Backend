@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database/db.js');
+const connection = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/order/register', async (req, res) => {
     try {
+        const db = await connection();
         const { customer_id, product_id, orderQuantity, orderStatus, user_id } = req.body;
 
         // Calculate priceInTotal
@@ -26,62 +27,43 @@ router.post('/order/register', async (req, res) => {
     }
 });
 
-router.get('/orders', authenticateToken, async (req, res) => {
+router.get("/orders", authenticateToken, async (req, res) => {
     try {
-
-        db.execute(
-            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders ORDER BY timestamp_update DESC", 
-            (err, result) => {
-
-            if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
-
+        const db = await connection();
+        const [results] = await db.execute(
+            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders ORDER BY timestamp_update DESC"
+        );
+        res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading orders:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading orders:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
-router.get('/order/:id', authenticateToken, async (req, res) => {
-    
+router.get("/order/:id", authenticateToken, async (req, res) => {
     let order_id = req.params.id;
 
     if (!order_id) {
-        return req.status(400).send({ error: true, message: 'Please provide order_id' });  
+        return req
+        .status(400)
+        .send({ error: true, message: "Please provide order_id" });
     }
 
     try {
-
-        db.execute(
-            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders WHERE order_id = ?", 
-            order_id, 
-            (err, result) => {
-
-            if (err) {
-                console.error('Error fetching items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
-
+        const db = await connection();
+        const [results] = await db.execute(
+            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders WHERE order_id = ?",
+            [order_id]
+        );
+        res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading order:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
 router.put('/order/:id', authenticateToken, async (req, res) => {
-
     let order_id = req.params.id;
-
     const {customer_id, product_id, orderQuantity, orderStatus, user_id} = req.body;
 
     if (!order_id || !customer_id || !product_id || !orderQuantity || !orderStatus || !user_id) {
@@ -89,26 +71,20 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
     }
 
     try {
+        const db = await connection();
+        const updateUserQuery = 
+            "UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?";
+        await db.execute(updateUserQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id]);
+  
+        const updatePriceQuery =
+            "UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?";
+        await db.execute(updatePriceQuery, [product_id, order_id]);
 
-        db.execute('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
-
-            if (err) {
-                console.error('Error updating items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                
-                const updatePriceQuery = 'UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?';
-                await db.execute(updatePriceQuery, [product_id, order_id]);
-                res.status(200).json({ message: 'Order updated successfully', result });
-            }
-        });
-
+        res.status(200).json({ message: "Order updated successfully" });
     } catch (error) {
-
         console.error('Error loading order:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-    
 });
 
 // router.put('/order/:id', authenticateToken, async (req, res) => {
@@ -198,30 +174,22 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
 //     }
 // });
 
-router.delete('/order/:id', authenticateToken, async (req, res) => {
-    
+router.delete("/order/:id", authenticateToken, async (req, res) => {
     let order_id = req.params.id;
 
     if (!order_id) {
-        return res.status(400).send({ error: true, message: 'Please provide order_id' });  
+        return res
+        .status(400)
+        .send({ error: true, message: "Please provide order_id" });
     }
 
     try {
-
-        db.execute('DELETE FROM orders WHERE order_id = ?', order_id, (err, result, fields) => {
-
-            if (err) {
-                console.error('Error deleting items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json({ message: 'Order deleted successfully', result });
-            }
-        });
-
+        const db = await connection();
+        await db.execute("DELETE FROM orders WHERE order_id = ?", [order_id]);
+        res.status(200).json({ message: "Order deleted successfully" });
     } catch (error) {
-
-        console.error('Error loading order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error deleting order:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 

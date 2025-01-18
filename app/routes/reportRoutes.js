@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database/db.js');
+const connection = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.get('/report/inventory', authenticateToken, async (req, res) => {
     try {
-        const inventoryReportQuery = `
+        const db = await connection();
+        const [results] = await db.execute(`
             SELECT
                 p.productName AS Product, 
                 p.productCode AS ProductCode,
@@ -33,16 +34,8 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
                 p.product_id, p.productName, p.productCode, p.productType, p.productQuantity
             ORDER BY
                 ProductType DESC, ProductCode;
-        `;
-        
-        db.execute(inventoryReportQuery, (err, result) => {
-            if (err) {
-                console.error('Error generating inventory report:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
+        `);
+        res.status(200).json(results);
     } catch (error) {
         console.error('Error generating inventory report:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -51,7 +44,8 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
 
 router.get('/report/overallsale', authenticateToken, async (req, res) => {
     try {
-        const salesReportQuery = `
+        const db = await connection();
+        const [results] = await db.execute(`
             SELECT 
                 p.productName AS Product, 
                 p.productCode AS ProductCode,
@@ -67,16 +61,8 @@ router.get('/report/overallsale', authenticateToken, async (req, res) => {
                 p.product_id, p.productName, p.productCode, p.productType, p.productPrice, p.productQuantity
             ORDER BY
                 ProductType DESC, ProductCode;
-        `;
-        
-        db.execute(salesReportQuery, (err, result) => {
-            if (err) {
-                console.error('Error overall-sale report:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
+        `);
+        res.status(200).json(results);
     } catch (error) {
         console.error('Error generating sales report:', error);
         res.status(500).json({ error: 'Internal Server Error' });

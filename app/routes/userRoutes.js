@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('../database/db.js');
+const connection = require('../database/db.js');
 const secretKey = require('../secretkey/secretkey.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/user/register', async (req, res) => {
     try{
-            
+        const db = await connection(); 
         const {name, username, role_id, password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -33,6 +33,7 @@ router.post('/user/register', async (req, res) => {
 
 router.post('/user/login', async (req, res) => {
     try {
+        const db = await connection();
         const { username, password } = req.body;
 
         const getUserQuery = `
@@ -72,60 +73,43 @@ router.post('/user/login', async (req, res) => {
     }
 });
 
-router.get('/users', authenticateToken, async (req, res) => {
-    try {
-
-        db.execute(
-          "SELECT user_id, role_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM users ORDER BY timestamp_update DESC",
-          (err, result) => {
-            if (err) {
-              console.error("Error fetching items:", err);
-              res.status(500).json({ message: "Internal Server Error" });
-            } else {
-              res.status(200).json(result);
-            }
-          }
-        );
-
+router.get("/users", authenticateToken, async (req, res) => {
+  try {
+    const db = await connection();
+    const [results] = await db.execute(
+      "SELECT user_id, role_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM users ORDER BY timestamp_update DESC"
+    );
+    res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading users:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+        console.error("Error loading users:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
-router.get('/user/:id', authenticateToken, async (req, res) => {
-    
-    let user_id = req.params.id;
+router.get("/user/:id", authenticateToken, async (req, res) => {
+  let user_id = req.params.id;
 
-    if (!user_id) {
-        return req.status(400).send({ error: true, message: 'Please provide user_id' });  
-    }
+  if (!user_id) {
+    return req
+      .status(400)
+      .send({ error: true, message: "Please provide user_id" });
+  }
 
-    try {
-
-        db.execute(
-          "SELECT user_id, role_id, name, username, password,  DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM users WHERE user_id = ?",
-          user_id,
-          (err, result) => {
-            if (err) {
-              console.error("Error fetching items:", err);
-              res.status(500).json({ message: "Internal Server Error" });
-            } else {
-              res.status(200).json(result);
-            }
-          }
-        );
-
+  try {
+    const db = await connection();
+    const [results] = await db.execute(
+      "SELECT user_id, role_id, name, username, password,  DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM users WHERE user_id = ?",
+      [user_id]
+    );
+    res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading user:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading user:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
 router.put('/user/:id', authenticateToken, async (req, res) => {
-
+    const db = await connection();
     let user_id = req.params.id;
 
     const {name, username, role_id, password} = req.body;
@@ -155,30 +139,22 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
     }   
 });
 
-router.delete('/user/:id', authenticateToken, async (req, res) => {
-    
+router.delete("/user/:id", authenticateToken, async (req, res) => {
+    const db = await connection();
     let user_id = req.params.id;
 
     if (!user_id) {
-        return res.status(400).send({ error: true, message: 'Please provide user_id' });  
+        return res
+        .status(400)
+        .send({ error: true, message: "Please provide user_id" });
     }
 
     try {
-
-        db.execute('DELETE FROM users WHERE user_id = ?', user_id, (err, result, fields) => {
-
-            if (err) {
-                console.error('Error deleting items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
-
+        await db.execute("DELETE FROM users WHERE user_id = ?", [user_id]);
+        res.status(200).json({ message: "User  deleted successfully" });
     } catch (error) {
-
-        console.error('Error loading user:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error deleting user:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database/db.js');
+const connection = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
 router.post('/supplier/register', async (req, res) => {
     try {
+        const db = await connection();
         const { name, username } = req.body;
 
         const checkUserQuery = 'SELECT * FROM suppliers WHERE username = ?';
@@ -24,55 +25,38 @@ router.post('/supplier/register', async (req, res) => {
     }
 });
 
-router.get('/suppliers', authenticateToken, async (req, res) => {
+router.get("/suppliers", authenticateToken, async (req, res) => {
     try {
-
-        db.execute(
-          "SELECT supplier_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM suppliers ORDER BY timestamp_update DESC",
-          (err, result) => {
-            if (err) {
-              console.error("Error fetching items:", err);
-              res.status(500).json({ message: "Internal Server Error" });
-            } else {
-              res.status(200).json(result);
-            }
-          }
+        const db = await connection();
+        const [results] = await db.execute(
+            "SELECT supplier_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM suppliers ORDER BY timestamp_update DESC"
         );
-
+        res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading suppliers:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading suppliers:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
-router.get('/supplier/:id', authenticateToken, async (req, res) => {
-    
+router.get("/supplier/:id", authenticateToken, async (req, res) => {
     let supplier_id = req.params.id;
 
     if (!supplier_id) {
-        return req.status(400).send({ error: true, message: 'Please provide supplier_id' });  
+        return req
+        .status(400)
+        .send({ error: true, message: "Please provide supplier_id" });
     }
 
     try {
-
-        db.execute(
-          "SELECT supplier_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM suppliers WHERE supplier_id = ?",
-          supplier_id,
-          (err, result) => {
-            if (err) {
-              console.error("Error fetching items:", err);
-              res.status(500).json({ message: "Internal Server Error" });
-            } else {
-              res.status(200).json(result);
-            }
-          }
+        const db = await connection();
+        const [results] = await db.execute(
+            "SELECT supplier_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM suppliers WHERE supplier_id = ?",
+            [supplier_id]
         );
-
+        res.status(200).json(results);
     } catch (error) {
-
-        console.error('Error loading supplier:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error loading supplier:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
@@ -85,7 +69,7 @@ router.put('/supplier/:id', authenticateToken, async (req, res) => {
     }
 
     try {
-        
+        const db = await connection();
         const checkUserQuery = 'SELECT * FROM suppliers WHERE username = ? AND supplier_id != ?';
         const [existingUser ] = await db.execute(checkUserQuery, [username, supplier_id]);
 
@@ -103,30 +87,22 @@ router.put('/supplier/:id', authenticateToken, async (req, res) => {
     }
 });
 
-router.delete('/supplier/:id', authenticateToken, async (req, res) => {
-    
+router.delete("/supplier/:id", authenticateToken, async (req, res) => {
     let supplier_id = req.params.id;
 
     if (!supplier_id) {
-        return res.status(400).send({ error: true, message: 'Please provide supplier_id' });  
+        return res
+        .status(400)
+        .send({ error: true, message: "Please provide supplier_id" });
     }
 
     try {
-
-        db.execute('DELETE FROM suppliers WHERE supplier_id = ?', supplier_id, (err, result, fields) => {
-
-            if (err) {
-                console.error('Error deleting items:', err);
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                res.status(200).json(result);
-            }
-        });
-
+        const db = await connection();
+        await db.execute("DELETE FROM suppliers WHERE supplier_id = ?", [supplier_id]);
+        res.status(200).json({ message: "Supplier deleted successfully" });
     } catch (error) {
-
-        console.error('Error loading supplier:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error deleting supplier:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
