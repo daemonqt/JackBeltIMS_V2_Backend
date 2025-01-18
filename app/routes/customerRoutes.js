@@ -8,7 +8,7 @@ router.post('/customer/register', async (req, res) => {
         const {name, username} = req.body;
 
         const checkUserQuery = 'SELECT * FROM customers WHERE username = ?';
-        const [existingUser ] = await db.promise().execute(checkUserQuery, [username]);
+        const [existingUser ] = await db.execute(checkUserQuery, [username]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
@@ -16,7 +16,7 @@ router.post('/customer/register', async (req, res) => {
 
         const insertUserQuery =
           "INSERT INTO customers (name, username, timestamp_add, timestamp_update) VALUES (?, ?, NOW(), NOW())";
-        await db.promise().execute(insertUserQuery, [name, username]);
+        await db.execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Customer registered successfully' });
     } catch (error) {
@@ -88,7 +88,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
     try {
 
         const checkUserQuery = 'SELECT * FROM customers WHERE username = ? AND customer_id != ?';
-        const [existingUser ] = await db.promise().execute(checkUserQuery, [username, customer_id]);
+        const [existingUser ] = await db.execute(checkUserQuery, [username, customer_id]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
@@ -96,7 +96,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
 
         const updateUserQuery =
           "UPDATE customers SET name = ?, username = ?, timestamp_update = NOW() WHERE customer_id = ?";
-        await db.promise().execute(updateUserQuery, [name, username, customer_id]);
+        await db.execute(updateUserQuery, [name, username, customer_id]);
 
         res.status(200).json({ message: 'Customer updated successfully' });
     } catch (error) {

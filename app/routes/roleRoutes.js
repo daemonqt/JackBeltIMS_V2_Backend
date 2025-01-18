@@ -9,14 +9,14 @@ router.post('/role/register', async (req, res) => {
         const {rolename} = req.body;
 
         const checkUserQuery = 'SELECT * FROM roles WHERE rolename = ?';
-        const [existingUser ] = await db.promise().execute(checkUserQuery, [rolename]);
+        const [existingUser ] = await db.execute(checkUserQuery, [rolename]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Rolename already exists' });
         }
 
         const insertUserQuery = 'INSERT INTO roles (rolename) VALUES (?)';
-        await db.promise().execute(insertUserQuery, [rolename]);
+        await db.execute(insertUserQuery, [rolename]);
 
         res.status(201).json({ message: 'Role registered successfully' });
     } catch (error) {
@@ -86,14 +86,14 @@ router.put('/role/:id', authenticateToken, async (req, res) => {
     try {
 
         const checkUserQuery = 'SELECT * FROM roles WHERE rolename = ? AND role_id != ?';
-        const [existingUser ] = await db.promise().execute(checkUserQuery, [rolename, role_id]);
+        const [existingUser ] = await db.execute(checkUserQuery, [rolename, role_id]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Rolename already exists' });
         }
 
         const updateUserQuery = 'UPDATE roles SET rolename = ? WHERE role_id = ?';
-        await db.promise().execute(updateUserQuery, [rolename, role_id]);
+        await db.execute(updateUserQuery, [rolename, role_id]);
 
         res.status(200).json({ message: 'Role updated successfully' });
     } catch (error) {

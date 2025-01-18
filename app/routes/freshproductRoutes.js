@@ -15,10 +15,10 @@ router.post('/fresh-products/register', async (req, res) => {
 
         const insertUserQuery =
           'INSERT INTO freshproducts (product_id, freshproductQuantity, user_id, timestamp_add, timestamp_update) VALUES (?, ?, ?, NOW(), NOW())';
-        await db.promise().execute(insertUserQuery, [product_id, freshproductQuantity, user_id]);
+        await db.execute(insertUserQuery, [product_id, freshproductQuantity, user_id]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?';
-        await db.promise().execute(updateQuantityQuery, [freshproductQuantity, product_id]);
+        await db.execute(updateQuantityQuery, [freshproductQuantity, product_id]);
 
         res.status(201).json({ message: 'Product quantity increased, updated products' });
     } catch (error) {

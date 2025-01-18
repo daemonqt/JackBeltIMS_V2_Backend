@@ -8,16 +8,16 @@ router.post('/order/register', async (req, res) => {
         const { customer_id, product_id, orderQuantity, orderStatus, user_id } = req.body;
 
         // Calculate priceInTotal
-        const [product] = await db.promise().query('SELECT productPrice FROM products WHERE product_id = ?', [product_id]);
+        const [product] = await db.query('SELECT productPrice FROM products WHERE product_id = ?', [product_id]);
         const productPrice = product[0].productPrice;
         const priceInTotal = orderQuantity * productPrice;
 
         const insertOrderQuery =
           'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, timestamp_add, timestamp_update, priceInTotal) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)';
-        await db.promise().execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
+        await db.execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?';
-        await db.promise().execute(updateQuantityQuery, [orderQuantity, product_id]);
+        await db.execute(updateQuantityQuery, [orderQuantity, product_id]);
 
         res.status(201).json({ message: 'Order registered successfully, updated products' });
     } catch (error) {
@@ -98,7 +98,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
             } else {
                 
                 const updatePriceQuery = 'UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?';
-                await db.promise().execute(updatePriceQuery, [product_id, order_id]);
+                await db.execute(updatePriceQuery, [product_id, order_id]);
                 res.status(200).json({ message: 'Order updated successfully', result });
             }
         });
@@ -122,7 +122,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
 //         });
 //     }
 
-//     const connection = await db.promise().getConnection();
+//     const connection = await db.getConnection();
 
 //     try {
 //         // Start transaction

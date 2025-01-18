@@ -11,11 +11,11 @@ router.post('/purchaseorder/register', async (req, res) => {
         const insertUserQuery =
           'INSERT INTO purchaseorders (supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id, timestamp_add, timestamp_update) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())';
         // const [insertPurchaseResult] = 
-        await db.promise().execute(insertUserQuery, [supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id]);
+        await db.execute(insertUserQuery, [supplier_id, product_id, purchaseQuantity, receivedMoney, purchaseStatus, user_id]);
         // const purchaseorder_id = insertPurchaseResult.insertId;
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?';
-        await db.promise().execute(updateQuantityQuery, [purchaseQuantity, product_id]);
+        await db.execute(updateQuantityQuery, [purchaseQuantity, product_id]);
 
         res.status(201).json({ message: 'Purchase registered successfully, updated products' });
     } catch (error) {
