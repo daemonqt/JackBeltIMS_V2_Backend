@@ -8,7 +8,7 @@ router.post('/customer/register', async (req, res) => {
         const {name, username} = req.body;
 
         const checkUserQuery = 'SELECT * FROM customers WHERE username = ?';
-        const [existingUser ] = await db.query(checkUserQuery, [username]);
+        const [existingUser ] = await db.execute(checkUserQuery, [username]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
@@ -16,7 +16,7 @@ router.post('/customer/register', async (req, res) => {
 
         const insertUserQuery =
           "INSERT INTO customers (name, username, timestamp_add, timestamp_update) VALUES (?, ?, NOW(), NOW())";
-        await db.query(insertUserQuery, [name, username]);
+        await db.execute(insertUserQuery, [name, username]);
 
         res.status(201).json({ message: 'Customer registered successfully' });
     } catch (error) {
@@ -28,7 +28,7 @@ router.post('/customer/register', async (req, res) => {
 router.get('/customers', authenticateToken, async (req, res) => {
     try {
 
-        db.query(
+        db.execute(
           "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers ORDER BY timestamp_update DESC",
           (err, result) => {
             if (err) {
@@ -57,7 +57,7 @@ router.get('/customer/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query(
+        db.execute(
           "SELECT customer_id, name, username, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') AS timestamp_update FROM customers WHERE customer_id = ?",
           customer_id,
           (err, result) => {
@@ -88,7 +88,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
     try {
 
         const checkUserQuery = 'SELECT * FROM customers WHERE username = ? AND customer_id != ?';
-        const [existingUser ] = await db.query(checkUserQuery, [username, customer_id]);
+        const [existingUser ] = await db.execute(checkUserQuery, [username, customer_id]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Username already exists. Please choose another.' });
@@ -96,7 +96,7 @@ router.put('/customer/:id', authenticateToken, async (req, res) => {
 
         const updateUserQuery =
           "UPDATE customers SET name = ?, username = ?, timestamp_update = NOW() WHERE customer_id = ?";
-        await db.query(updateUserQuery, [name, username, customer_id]);
+        await db.execute(updateUserQuery, [name, username, customer_id]);
 
         res.status(200).json({ message: 'Customer updated successfully' });
     } catch (error) {
@@ -116,7 +116,7 @@ router.delete('/customer/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('DELETE FROM customers WHERE customer_id = ?', customer_id, (err, result, fields) => {
+        db.execute('DELETE FROM customers WHERE customer_id = ?', customer_id, (err, result, fields) => {
 
             if (err) {
                 console.error('Error deleting items:', err);

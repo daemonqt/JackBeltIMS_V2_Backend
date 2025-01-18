@@ -11,7 +11,7 @@ router.get('/sales', authenticateToken, async (req, res) => {
             JOIN products p ON o.product_id = p.product_id
             WHERE o.orderStatus != 'PENDING'
         `;
-        db.query(totalSalesQuery, (err, result) => {
+        db.execute(totalSalesQuery, (err, result) => {
             if (err) {
                 console.error('Error fetching total sales:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -36,7 +36,7 @@ router.get('/sales-by-products', authenticateToken, async (req, res) => {
             GROUP BY p.product_id, p.productName
             ORDER BY total_sales DESC;
         `;
-        db.query(salesByProductsQuery, (err, result) => {
+        db.execute(salesByProductsQuery, (err, result) => {
             if (err) {
                 console.error('Error fetching sales by products:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -62,7 +62,7 @@ router.get('/sales-by-month', authenticateToken, async (req, res) => {
             GROUP BY month
             ORDER BY STR_TO_DATE(CONCAT('01-', SUBSTRING(month, 6)), '%d-%M-%Y');
         `;
-        db.query(salesByMonthQuery, (err, result) => {
+        db.execute(salesByMonthQuery, (err, result) => {
             if (err) {
                 console.error('Error fetching sales by products:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -87,7 +87,7 @@ router.get('/orders-by-month', authenticateToken, async (req, res) => {
             GROUP BY p.productName, orderMonth
             ORDER BY orderCount DESC;
         `;
-        db.query(ordersByMonthQuery, (err, result) => {
+        db.execute(ordersByMonthQuery, (err, result) => {
             if (err) {
                 console.error('Error fetching orders by products:', err);
                 res.status(500).json({ message: 'Internal Server Error' });

@@ -9,14 +9,14 @@ router.post('/role/register', async (req, res) => {
         const {rolename} = req.body;
 
         const checkUserQuery = 'SELECT * FROM roles WHERE rolename = ?';
-        const [existingUser ] = await db.query(checkUserQuery, [rolename]);
+        const [existingUser ] = await db.execute(checkUserQuery, [rolename]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Rolename already exists' });
         }
 
         const insertUserQuery = 'INSERT INTO roles (rolename) VALUES (?)';
-        await db.query(insertUserQuery, [rolename]);
+        await db.execute(insertUserQuery, [rolename]);
 
         res.status(201).json({ message: 'Role registered successfully' });
     } catch (error) {
@@ -29,7 +29,7 @@ router.post('/role/register', async (req, res) => {
 router.get('/roles', authenticateToken, async (req, res) => {
     try {
 
-        db.query('SELECT role_id, rolename FROM roles', (err, result) => {
+        db.execute('SELECT role_id, rolename FROM roles', (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -56,7 +56,7 @@ router.get('/role/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('SELECT role_id, rolename FROM roles WHERE role_id = ?', role_id, (err, result) => {
+        db.execute('SELECT role_id, rolename FROM roles WHERE role_id = ?', role_id, (err, result) => {
 
             if (err) {
                 console.error('Error fetching items:', err);
@@ -86,14 +86,14 @@ router.put('/role/:id', authenticateToken, async (req, res) => {
     try {
 
         const checkUserQuery = 'SELECT * FROM roles WHERE rolename = ? AND role_id != ?';
-        const [existingUser ] = await db.query(checkUserQuery, [rolename, role_id]);
+        const [existingUser ] = await db.execute(checkUserQuery, [rolename, role_id]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Rolename already exists' });
         }
 
         const updateUserQuery = 'UPDATE roles SET rolename = ? WHERE role_id = ?';
-        await db.query(updateUserQuery, [rolename, role_id]);
+        await db.execute(updateUserQuery, [rolename, role_id]);
 
         res.status(200).json({ message: 'Role updated successfully' });
     } catch (error) {
@@ -112,7 +112,7 @@ router.delete('/role/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('DELETE FROM roles WHERE role_id = ?', role_id, (err, result, fields) => {
+        db.execute('DELETE FROM roles WHERE role_id = ?', role_id, (err, result, fields) => {
 
             if (err) {
                 console.error('Error deleting items:', err);

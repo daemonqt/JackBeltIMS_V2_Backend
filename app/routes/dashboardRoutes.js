@@ -5,7 +5,7 @@ const authenticateToken = require('../authenticator/authentication.js');
 
 router.get('/users/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS userCount FROM users', (err, result) => {
+        db.execute('SELECT COUNT(*) AS userCount FROM users', (err, result) => {
             if (err) {
                 console.error('Error fetching user count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -22,7 +22,7 @@ router.get('/users/count', authenticateToken, async (req, res) => {
 
 router.get('/products/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS productCount FROM products', (err, result) => {
+        db.execute('SELECT COUNT(*) AS productCount FROM products', (err, result) => {
             if (err) {
                 console.error('Error fetching product count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -39,7 +39,7 @@ router.get('/products/count', authenticateToken, async (req, res) => {
 
 router.get('/customers/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS customerCount FROM customers', (err, result) => {
+        db.execute('SELECT COUNT(*) AS customerCount FROM customers', (err, result) => {
             if (err) {
                 console.error('Error fetching customer count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -56,7 +56,7 @@ router.get('/customers/count', authenticateToken, async (req, res) => {
 
 router.get('/suppliers/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS supplierCount FROM suppliers', (err, result) => {
+        db.execute('SELECT COUNT(*) AS supplierCount FROM suppliers', (err, result) => {
             if (err) {
                 console.error('Error fetching supplier count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -73,7 +73,7 @@ router.get('/suppliers/count', authenticateToken, async (req, res) => {
 
 router.get('/orders/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS orderCount FROM orders', (err, result) => {
+        db.execute('SELECT COUNT(*) AS orderCount FROM orders', (err, result) => {
             if (err) {
                 console.error('Error fetching order count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -90,7 +90,7 @@ router.get('/orders/count', authenticateToken, async (req, res) => {
 
 router.get('/purchaseorders/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS purchaseorderCount FROM purchaseorders', (err, result) => {
+        db.execute('SELECT COUNT(*) AS purchaseorderCount FROM purchaseorders', (err, result) => {
             if (err) {
                 console.error('Error fetching purchaseorder count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -107,7 +107,7 @@ router.get('/purchaseorders/count', authenticateToken, async (req, res) => {
 
 router.get('/fresh-product/count', authenticateToken, async (req, res) => {
     try {
-        db.query('SELECT COUNT(*) AS freshproductsCount FROM freshproducts', (err, result) => {
+        db.execute('SELECT COUNT(*) AS freshproductsCount FROM freshproducts', (err, result) => {
             if (err) {
                 console.error('Error fetching product count:', err);
                 res.status(500).json({ message: 'Internal Server Error' });

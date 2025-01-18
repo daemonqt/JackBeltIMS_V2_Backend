@@ -15,10 +15,10 @@ router.post('/fresh-products/register', async (req, res) => {
 
         const insertUserQuery =
           'INSERT INTO freshproducts (product_id, freshproductQuantity, user_id, timestamp_add, timestamp_update) VALUES (?, ?, ?, NOW(), NOW())';
-        await db.query(insertUserQuery, [product_id, freshproductQuantity, user_id]);
+        await db.execute(insertUserQuery, [product_id, freshproductQuantity, user_id]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?';
-        await db.query(updateQuantityQuery, [freshproductQuantity, product_id]);
+        await db.execute(updateQuantityQuery, [freshproductQuantity, product_id]);
 
         res.status(201).json({ message: 'Product quantity increased, updated products' });
     } catch (error) {
@@ -31,7 +31,7 @@ router.post('/fresh-products/register', async (req, res) => {
 router.get('/fresh-products', authenticateToken, async (req, res) => {
     try {
 
-        db.query(
+        db.execute(
             "SELECT freshproduct_id, product_id, freshproductQuantity, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM freshproducts ORDER BY timestamp_update DESC", 
             (err, result) => {
 
@@ -60,7 +60,7 @@ router.get('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query(
+        db.execute(
             "SELECT freshproduct_id, product_id, freshproductQuantity, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM freshproducts WHERE freshproduct_id = ?", 
             freshproduct_id, 
             (err, result) => {
@@ -97,7 +97,7 @@ router.put('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE freshproducts SET product_id = ?, freshproductQuantity = ?, user_id = ?, timestamp_update = NOW() WHERE freshproduct_id = ?', [product_id, freshproductQuantity, user_id, freshproduct_id], async (err, result, fields) => {
+        db.execute('UPDATE freshproducts SET product_id = ?, freshproductQuantity = ?, user_id = ?, timestamp_update = NOW() WHERE freshproduct_id = ?', [product_id, freshproductQuantity, user_id, freshproduct_id], async (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);
@@ -126,7 +126,7 @@ router.delete('/fresh-products/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('DELETE FROM freshproducts WHERE freshproduct_id = ?', freshproduct_id, (err, result, fields) => {
+        db.execute('DELETE FROM freshproducts WHERE freshproduct_id = ?', freshproduct_id, (err, result, fields) => {
 
             if (err) {
                 console.error('Error deleting items:', err);

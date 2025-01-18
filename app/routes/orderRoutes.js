@@ -8,16 +8,16 @@ router.post('/order/register', async (req, res) => {
         const { customer_id, product_id, orderQuantity, orderStatus, user_id } = req.body;
 
         // Calculate priceInTotal
-        const [product] = await db.query('SELECT productPrice FROM products WHERE product_id = ?', [product_id]);
+        const [product] = await db.execute('SELECT productPrice FROM products WHERE product_id = ?', [product_id]);
         const productPrice = product[0].productPrice;
         const priceInTotal = orderQuantity * productPrice;
 
         const insertOrderQuery =
           'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, timestamp_add, timestamp_update, priceInTotal) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)';
-        await db.query(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
+        await db.execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?';
-        await db.query(updateQuantityQuery, [orderQuantity, product_id]);
+        await db.execute(updateQuantityQuery, [orderQuantity, product_id]);
 
         res.status(201).json({ message: 'Order registered successfully, updated products' });
     } catch (error) {
@@ -29,7 +29,7 @@ router.post('/order/register', async (req, res) => {
 router.get('/orders', authenticateToken, async (req, res) => {
     try {
 
-        db.query(
+        db.execute(
             "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders ORDER BY timestamp_update DESC", 
             (err, result) => {
 
@@ -58,7 +58,7 @@ router.get('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query(
+        db.execute(
             "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders WHERE order_id = ?", 
             order_id, 
             (err, result) => {
@@ -90,7 +90,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
+        db.execute('UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?', [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id], async (err, result, fields) => {
 
             if (err) {
                 console.error('Error updating items:', err);
@@ -98,7 +98,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
             } else {
                 
                 const updatePriceQuery = 'UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?';
-                await db.query(updatePriceQuery, [product_id, order_id]);
+                await db.execute(updatePriceQuery, [product_id, order_id]);
                 res.status(200).json({ message: 'Order updated successfully', result });
             }
         });
@@ -208,7 +208,7 @@ router.delete('/order/:id', authenticateToken, async (req, res) => {
 
     try {
 
-        db.query('DELETE FROM orders WHERE order_id = ?', order_id, (err, result, fields) => {
+        db.execute('DELETE FROM orders WHERE order_id = ?', order_id, (err, result, fields) => {
 
             if (err) {
                 console.error('Error deleting items:', err);

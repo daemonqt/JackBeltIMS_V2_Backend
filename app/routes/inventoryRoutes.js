@@ -22,7 +22,7 @@ router.get('/inventory-report', authenticateToken, async (req, res) => {
                 p.product_id;
         `;
         
-        db.query(inventoryReportQuery, (err, result) => {
+        db.execute(inventoryReportQuery, (err, result) => {
             if (err) {
                 console.error('Error generating inventory report:', err);
                 res.status(500).json({ message: 'Internal Server Error' });

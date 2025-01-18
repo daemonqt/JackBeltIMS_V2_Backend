@@ -35,7 +35,7 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
                 ProductType DESC, ProductCode;
         `;
         
-        db.query(inventoryReportQuery, (err, result) => {
+        db.execute(inventoryReportQuery, (err, result) => {
             if (err) {
                 console.error('Error generating inventory report:', err);
                 res.status(500).json({ message: 'Internal Server Error' });
@@ -69,7 +69,7 @@ router.get('/report/overallsale', authenticateToken, async (req, res) => {
                 ProductType DESC, ProductCode;
         `;
         
-        db.query(salesReportQuery, (err, result) => {
+        db.execute(salesReportQuery, (err, result) => {
             if (err) {
                 console.error('Error overall-sale report:', err);
                 res.status(500).json({ message: 'Internal Server Error' });

@@ -17,7 +17,7 @@ router.get("/seasonality-data", authenticateToken, async (req, res) => {
       ORDER BY p.productName, month;
     `;
 
-    db.query(seasonalityQuery, (err, results) => {
+    db.execute(seasonalityQuery, (err, results) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ message: "Internal Server Error" });
@@ -60,7 +60,7 @@ router.get("/daily-sales", authenticateToken, async (req, res) => {
       ORDER BY date;
     `;
 
-    db.query(dailySalesQuery, (err, results) => {
+    db.execute(dailySalesQuery, (err, results) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ message: "Internal Server Error" });
@@ -93,7 +93,7 @@ router.get("/monthly-sales", authenticateToken, async (req, res) => {
       ORDER BY month;
     `;
 
-    db.query(monthlySalesQuery, (err, results) => {
+    db.execute(monthlySalesQuery, (err, results) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ message: "Internal Server Error" });
@@ -126,7 +126,7 @@ router.get("/yearly-sales", authenticateToken, async (req, res) => {
       ORDER BY year;
     `;
 
-    db.query(yearlySalesQuery, (err, results) => {
+    db.execute(yearlySalesQuery, (err, results) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ message: "Internal Server Error" });
@@ -159,7 +159,7 @@ router.get("/product-revenue", authenticateToken, async (req, res) => {
       ORDER BY totalRevenue DESC;
     `;
 
-    db.query(productRevenueQuery, (err, results) => {
+    db.execute(productRevenueQuery, (err, results) => {
       if (err) {
         console.error("Error executing query:", err);
         res.status(500).json({ message: "Internal Server Error" });
