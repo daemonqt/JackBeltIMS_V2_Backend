@@ -14,10 +14,10 @@ router.post('/order/register', async (req, res) => {
 
         const insertOrderQuery =
           'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, timestamp_add, timestamp_update, priceInTotal) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)';
-        await db.execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
+        await db.query(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
 
         const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?';
-        await db.execute(updateQuantityQuery, [orderQuantity, product_id]);
+        await db.query(updateQuantityQuery, [orderQuantity, product_id]);
 
         res.status(201).json({ message: 'Order registered successfully, updated products' });
     } catch (error) {
@@ -98,7 +98,7 @@ router.put('/order/:id', authenticateToken, async (req, res) => {
             } else {
                 
                 const updatePriceQuery = 'UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?';
-                await db.execute(updatePriceQuery, [product_id, order_id]);
+                await db.query(updatePriceQuery, [product_id, order_id]);
                 res.status(200).json({ message: 'Order updated successfully', result });
             }
         });

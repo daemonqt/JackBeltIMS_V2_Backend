@@ -17,7 +17,7 @@ router.post('/product/register', async (req, res) => {
         }
 
         const checkUserQuery = 'SELECT * FROM products WHERE productCode = ?';
-        const [existingUser ] = await db.execute(checkUserQuery, [productCode]);
+        const [existingUser ] = await db.query(checkUserQuery, [productCode]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Product code already exists' });
@@ -25,7 +25,7 @@ router.post('/product/register', async (req, res) => {
 
         const insertUserQuery =
           'INSERT INTO products (productName, productCode, productType, productQuantity, productPrice, timestamp_add, timestamp_update) VALUES (?, ?, ?, ?, ?, NOW(), NOW())';
-        await db.execute(insertUserQuery, [productName, productCode, productType, productQuantity, productPrice]);
+        await db.query(insertUserQuery, [productName, productCode, productType, productQuantity, productPrice]);
 
         res.status(201).json({ message: 'Product registered successfully' });
     } catch (error) {
@@ -106,14 +106,14 @@ router.put('/product/:id', authenticateToken, async (req, res) => {
     try {
 
         const checkUserQuery = 'SELECT * FROM products WHERE productCode = ? AND product_id != ?';
-        const [existingUser ] = await db.execute(checkUserQuery, [productCode, product_id]);
+        const [existingUser ] = await db.query(checkUserQuery, [productCode, product_id]);
 
         if (existingUser .length > 0) {
             return res.status(409).json({ message: 'Product code already exists' });
         }
 
         const updateUserQuery = 'UPDATE products SET productName = ?, productCode = ?, productType = ?, productQuantity = ?, productPrice = ?, timestamp_update = NOW() WHERE product_id = ?';
-        await db.execute(updateUserQuery, [productName, productCode, productType, productQuantity, productPrice, product_id]);
+        await db.query(updateUserQuery, [productName, productCode, productType, productQuantity, productPrice, product_id]);
 
         res.status(200).json({ message: 'Product updated successfully' });
     } catch (error) {
