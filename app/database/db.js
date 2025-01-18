@@ -1,7 +1,7 @@
-const mysql = require('mysql2');
+const mysql = require("mysql2/promise");
 
 //onlineDB
-const db = mysql.createPool({
+const dbConfig = {
   host: "mysql-186603-0.cloudclusters.net",
   user: "admin",
   password: "eoeiBuZJ",
@@ -12,22 +12,26 @@ const db = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   keepAliveInitialDelay: 10000,
-});
+};
 
-// const db = mysql.createPool({
+// const dbConfig = {
 //   host: "localhost",
 //   user: "root",
 //   password: "",
 //   database: "populator",
-// });
+// };
 
-// db.connect((err) => {
+async function createPool() {
+  try {
+    const pool = await mysql.createPool(dbConfig);
+    console.log("Pool created");
+    return pool;
+  } catch (error) {
+    console.error("Error creating pool:", error);
+    throw error;
+  }
+}
 
-//     if (err) {
-//         console.error('Error connecting to MySQL:', err);
-//     } else {
-//         console.log('Connected to MySQL');
-//     }
-// });
+const db = createPool();
 
 module.exports = db;
