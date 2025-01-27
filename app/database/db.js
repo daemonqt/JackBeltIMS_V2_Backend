@@ -8,10 +8,7 @@ const pool = mysql.createPool({
   database: "jackbeltims",
   port: "10121",
   timezone: "+08:00",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 10,
-  keepAliveInitialDelay: 10000,
+  connectionLimit: 200,
 });
 
 // Offline
