@@ -49,33 +49,69 @@ router.post('/product/register', authenticateToken, uploadProductImage.single('p
         }
 
         const renameProductVariant = req.body.productVariant ? req.body.productVariant.replace(/[^a-zA-Z0-9]/g, '') : 'default';
-        const extension = path.extname(req.file.originalname);
-        const filename = `${renameProductVariant}_${Date.now()}${extension}`;
-        const dir = path.join(__dirname, "../files/product-images/");
-        const filePath = path.join(dir, filename);
+        let productImage = null;
 
-        fs.writeFile(filePath, req.file.buffer, async (err) => {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to save file' });
-            }
-            const productImage = filename;
+        if (req.file) {
+            const extension = path.extname(req.file.originalname);
+            const filename = `${renameProductVariant}_${Date.now()}${extension}`;
+            const dir = path.join(__dirname, "../files/product-images/");
+            const filePath = path.join(dir, filename);
 
-            const insertProductQuery = `
-                INSERT INTO products (
-                    productType, 
+            fs.writeFile(filePath, req.file.buffer, async (err) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Failed to save file' });
+                }
+                productImage = filename;
+
+                const insertProductQuery = `
+                    INSERT INTO products (
+                        productType, 
+                        productCode,
+                        productImage, 
+                        productName, 
+                        productVariant, 
+                        productQuantity, 
+                        productPrice,
+                        priceAdjustment
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'NONE')
+                `;
+                const [AddProductResult] = await db.execute(insertProductQuery, [
+                    productType,
                     productCode,
                     productImage, 
                     productName, 
                     productVariant, 
                     productQuantity, 
+                    productPrice
+                ]);
+
+                const product_id = AddProductResult.insertId;
+
+                const insertPriceHistoryQuery = `
+                    INSERT INTO price_history (
+                        product_id,
+                        priceHistory
+                    ) VALUES (?, ?)
+                `;
+                await db.execute(insertPriceHistoryQuery, [product_id, productPrice]);
+
+                return res.status(201).json({ message: 'Product registered successfully' });
+            });
+        } else {
+            const insertProductQuery = `
+                INSERT INTO products (
+                    productType, 
+                    productCode,
+                    productName, 
+                    productVariant, 
+                    productQuantity, 
                     productPrice,
                     priceAdjustment
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'NONE')
+                ) VALUES (?, ?, ?, ?, ?, ?, 'NONE')
             `;
             const [AddProductResult] = await db.execute(insertProductQuery, [
                 productType,
                 productCode,
-                productImage, 
                 productName, 
                 productVariant, 
                 productQuantity, 
@@ -90,16 +126,10 @@ router.post('/product/register', authenticateToken, uploadProductImage.single('p
                     priceHistory
                 ) VALUES (?, ?)
             `;
-            await db.execute(insertPriceHistoryQuery, [
-                product_id,
-                productPrice
-            ]);
+            await db.execute(insertPriceHistoryQuery, [product_id, productPrice]);
 
-            res.status(201).json({ message: 'Product registered successfully' });
-        });
-    } catch (error) {
-        console.error('Error registering product:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+            return res.status(201).json({ message: 'Product registered successfully' });
+        }
     } finally {
         if (db) {
             db.release();
@@ -128,6 +158,40 @@ router.get("/products", authenticateToken, async (req, res) => {
                 products 
             ORDER BY 
                 timestamp_update DESC
+        `);
+        res.status(200).json(results);
+    } catch (error) {
+        console.error("Error loading products:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
+    }
+});
+
+router.get("/products-orderview", authenticateToken, async (req, res) => {
+    let db;
+    try {
+        db = await connection();
+        const [results] = await db.execute(`
+            SELECT 
+                product_id, 
+                productType, 
+                productCode, 
+                productImage, 
+                productName, 
+                productVariant, 
+                productQuantity, 
+                productPrice,
+                priceAdjustment,
+                DATE_FORMAT(timestamp_add, '%m/%d/%Y %h:%i %p') AS timestamp_add, 
+                DATE_FORMAT(timestamp_update, '%m/%d/%Y %h:%i %p') AS timestamp_update 
+            FROM
+                products 
+            ORDER BY 
+                productType DESC, 
+                CAST(SUBSTRING_INDEX(productVariant, '"', 1) AS UNSIGNED) ASC
         `);
         res.status(200).json(results);
     } catch (error) {

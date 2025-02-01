@@ -5,53 +5,63 @@ const connection = require("../database/db.js");
 const authenticateToken = require("../authenticator/authentication.js");
 
 router.get("/seasonality-data", authenticateToken, async (req, res) => {
+    let db;
     try {
-        const db = await connection();
+        db = await connection();
         const [results] = await db.execute(`
             SELECT 
-                p.productName, 
-                MONTH(o.timestamp_update) AS month, 
-                SUM(o.orderQuantity) AS totalQuantity
-            FROM orders o
-            JOIN products p ON o.product_id = p.product_id
-            WHERE o.orderStatus != 'PENDING'
-            GROUP BY p.productName, month
-            ORDER BY p.productName, month;
+                p.productName,
+                p.productVariant,
+                MONTH(od.timestamp_create) AS month, 
+                SUM(od.orderQuantity) AS totalQuantity
+            FROM 
+                order_details od
+            JOIN 
+                products p ON od.product_id = p.product_id
+            GROUP BY 
+                p.productVariant, month
+            ORDER BY 
+                p.productName, month;
         `);
         const data = results.reduce((acc, row) => {
-            const { productName, month, totalQuantity } = row;
-            if (!acc[productName]) {
-                acc[productName] = Array(12).fill(0);
+            const { productName, productVariant, month, totalQuantity } = row;
+            if (!acc[productVariant]) {
+                acc[productVariant] = Array(12).fill(0);
             }
-            acc[productName][month - 1] = totalQuantity;
+            acc[productVariant][month - 1] = totalQuantity;
             return acc;
         }, {});
 
-        const seriesData = Object.keys(data).map((productName) => ({
-            name: productName,
-            data: data[productName],
+        const seriesData = Object.keys(data).map((productVariant) => ({
+            name: productVariant,
+            data: data[productVariant],
         }));
 
         res.status(200).json(seriesData);
     } catch (error) {
         console.error("Error fetching seasonality data:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
 router.get("/daily-sales", authenticateToken, async (req, res) => {
+    let db;
     try {
-        const db = await connection();
+        db = await connection();
         const [results] = await db.execute(`
             SELECT 
-                DATE_FORMAT(timestamp_update, '%m-%d-%Y') AS date,
+                DATE(timestamp_create) AS date,
                 SUM(orderQuantity) AS totalQuantity
-            FROM orders
-            WHERE orderStatus != 'PENDING'
-                AND YEAR(timestamp_update) = YEAR(CURDATE())
-                AND MONTH(timestamp_update) = MONTH(CURDATE())
-            GROUP BY date
-            ORDER BY date;
+            FROM order_details
+            WHERE 
+                timestamp_create >= DATE(NOW() - INTERVAL 6 DAY)
+                AND timestamp_create <= DATE(NOW()) 
+            GROUP BY DATE(timestamp_create)
+            ORDER BY DATE(timestamp_create);
         `);
 
         const data = results.map((row) => ({
@@ -63,19 +73,24 @@ router.get("/daily-sales", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error("Error fetching daily sales data:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
 router.get("/monthly-sales", authenticateToken, async (req, res) => {
+    let db;
     try {
         const db = await connection();
         const [results] = await db.execute(`
             SELECT 
-                DATE_FORMAT(timestamp_update, '%Y-%m') AS month,
+                DATE_FORMAT(timestamp_create, '%Y/%m') AS month,
                 SUM(orderQuantity) AS totalQuantity
-            FROM orders
-            WHERE orderStatus != 'PENDING'
-                AND YEAR(timestamp_update) = YEAR(CURDATE()) 
+            FROM order_details
+            WHERE
+                YEAR(timestamp_create) = YEAR(CURDATE()) 
             GROUP BY month
             ORDER BY month;
         `);
@@ -89,19 +104,24 @@ router.get("/monthly-sales", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error("Error fetching monthly sales data:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
 router.get("/yearly-sales", authenticateToken, async (req, res) => {
+    let db;
     try {
-        const db = await connection();
+        db = await connection();
         const [results] = await db.execute(`
             SELECT 
-                YEAR(timestamp_update) AS year,
+                YEAR(timestamp_create) AS year,
                 SUM(orderQuantity) AS totalQuantity
-            FROM orders
-            WHERE orderStatus != 'PENDING'
-                AND YEAR(timestamp_update) BETWEEN YEAR(CURDATE()) - 4 AND YEAR(CURDATE())
+            FROM order_details
+            WHERE
+				YEAR(timestamp_create) BETWEEN YEAR(CURDATE()) - 4 AND YEAR(CURDATE())
             GROUP BY year
             ORDER BY year;
         `);
@@ -115,25 +135,34 @@ router.get("/yearly-sales", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error("Error fetching yearly sales data:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
 router.get("/product-revenue", authenticateToken, async (req, res) => {
+    let db;
     try {
-        const db = await connection();
+        db = await connection();
         const [results] = await db.execute(`
             SELECT 
                 p.productName,
-                COALESCE(SUM(o.orderQuantity), 0) * p.productPrice AS totalRevenue
-            FROM orders o
-            JOIN products p ON o.product_id = p.product_id
-            WHERE o.orderStatus != 'PENDING'
-            GROUP BY p.productName, p.productPrice
-            ORDER BY totalRevenue DESC;
+                p.productVariant,
+                COALESCE(SUM(od.orderQuantity), 0) * p.productPrice AS totalRevenue
+            FROM 
+                order_details od
+            JOIN 
+                products p ON od.product_id = p.product_id
+            GROUP BY 
+                p.productVariant, p.productPrice
+            ORDER BY 
+                totalRevenue DESC;
         `);
 
         const data = results.map((row) => ({
-            productName: row.productName,
+            productVariant: row.productVariant,
             totalRevenue: row.totalRevenue,
         }));
 
@@ -141,6 +170,10 @@ router.get("/product-revenue", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error("Error fetching product revenue data:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 

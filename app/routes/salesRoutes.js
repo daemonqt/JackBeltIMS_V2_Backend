@@ -3,17 +3,36 @@ const router = express.Router();
 const connection = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
 
+router.get('/revenue', authenticateToken, async (req, res) => {
+    try {
+        const db = await connection();
+        const [results] = await db.execute(`
+            SELECT
+                SUM(od.orderQuantity * p.productPrice) AS TotalRevenue
+            FROM 
+                products p
+            JOIN
+                order_details od ON p.product_id = od.product_id;
+        `);
+        const TotalRevenue = results[0].TotalRevenue || 0;
+        res.status(200).json({ TotalRevenue });
+    } catch (error) {
+        console.error('Error loading total sales:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 router.get('/sales', authenticateToken, async (req, res) => {
     try {
         const db = await connection();
         const [results] = await db.execute(`
-            SELECT SUM(o.orderQuantity * p.productPrice) AS total_sales 
-            FROM orders o 
-            JOIN products p ON o.product_id = p.product_id
-            WHERE o.orderStatus != 'PENDING'
+            SELECT
+                SUM(orderQuantity) AS TotalSales
+            FROM
+                order_details;
         `);
-        const totalSales = results[0].total_sales || 0;
-        res.status(200).json({ totalSales });
+        const TotalSales = results[0].TotalSales || 0;
+        res.status(200).json({ TotalSales });
     } catch (error) {
         console.error('Error loading total sales:', error);
         res.status(500).json({ error: 'Internal Server Error' });

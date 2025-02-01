@@ -2,46 +2,188 @@ const express = require('express');
 const router = express.Router();
 const connection = require('../database/db.js');
 const authenticateToken = require('../authenticator/authentication.js');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
-router.post('/order/register', async (req, res) => {
+function generateRandomNumber(length) {
+    let randomNumber = "";
+    for (let i = 0; i < length; i++) {
+        randomNumber += Math.floor(Math.random() * 10);
+    }
+    return randomNumber;
+}
+
+const storage = multer.memoryStorage();
+const uploadReceipt = multer({ storage });
+
+router.post("/order/register", authenticateToken, async (req, res) => {
+    let db;
     try {
-        const db = await connection();
-        const { customer_id, product_id, orderQuantity, orderStatus, user_id } = req.body;
+        db = await connection();
+        const { customerName, user_id, products, orderPayment } = req.body;
 
-        // Calculate priceInTotal
-        const [product] = await db.execute('SELECT productPrice FROM products WHERE product_id = ?', [product_id]);
-        const productPrice = product[0].productPrice;
-        const priceInTotal = orderQuantity * productPrice;
+        if (!Array.isArray(products) || products.length === 0) {
+            return res
+            .status(400)
+            .json({ error: "Products array is required and cannot be empty." });
+        }
 
-        const insertOrderQuery =
-          'INSERT INTO orders (customer_id, product_id, orderQuantity, orderStatus, user_id, timestamp_add, timestamp_update, priceInTotal) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)';
-        await db.execute(insertOrderQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, priceInTotal]);
+        const randomDigits = generateRandomNumber(13);
+        const referenceNumber = `${randomDigits}`;
 
-        const updateQuantityQuery = 'UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?';
-        await db.execute(updateQuantityQuery, [orderQuantity, product_id]);
+        let totalQuantity = 0;
+        let totalPrice = 0;
 
-        res.status(201).json({ message: 'Order registered successfully, updated products' });
+        for (const product of products) {
+            const [productData] = await db.execute(`
+                SELECT 
+                    productName, 
+                    productVariant, 
+                    productPrice 
+                FROM 
+                    products 
+                WHERE 
+                    product_id = ?`,
+                [product.product_id]
+            );
+            if (productData.length === 0) {
+                return res
+                .status(404)
+                .json({ error: `Product with ID ${product.product_id} not found.` });
+            }
+
+            const { productName, productVariant, productPrice } = productData[0];
+            const subTotal =
+                product.orderQuantity * productPrice - (product.orderDiscount || 0);
+
+            totalQuantity += Number(product.orderQuantity);
+            totalPrice += subTotal;
+        }
+
+        const orderChange = orderPayment - totalPrice;
+
+        const insertOrderQuery = `
+            INSERT INTO orders (
+                customerName,
+                referenceNumber,
+                totalQuantity,
+                totalPrice,
+                orderPayment,
+                orderChange,
+                user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+        const [orderResult] = await db.execute(insertOrderQuery, [
+            customerName,
+            referenceNumber,
+            totalQuantity,
+            totalPrice,
+            orderPayment,
+            orderChange,
+            user_id,
+        ]);
+
+        const orderId = orderResult.insertId;
+
+        for (const product of products) {
+            const [productData] = await db.execute(`
+                SELECT 
+                    productName, 
+                    productVariant, 
+                    productPrice 
+                FROM 
+                    products 
+                WHERE 
+                    product_id = ?`,
+                [product.product_id]
+            );
+            const { productName, productVariant, productPrice } = productData[0];
+            const subTotal =
+                product.orderQuantity * productPrice - (product.orderDiscount || 0);
+
+            const insertOrderDetailsQuery = `
+                INSERT INTO order_details (
+                    order_id,
+                    product_id,
+                    productName,
+                    productVariation,
+                    orderQuantity,
+                    orderDiscount,
+                    subTotal
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            `;
+            await db.execute(insertOrderDetailsQuery, [
+                orderId,
+                product.product_id,
+                productName,
+                productVariant,
+                product.orderQuantity,
+                product.orderDiscount || 0,
+                subTotal,
+            ]);
+
+            
+            const updateProductQuantityQuery = `
+                UPDATE 
+                    products 
+                SET 
+                    productQuantity = productQuantity - ? 
+                WHERE 
+                    product_id = ?`;
+            await db.execute(updateProductQuantityQuery, [
+                product.orderQuantity,
+                product.product_id,
+            ]);
+        }
+
+        res.status(201).json({ message: "Order registered successfully", orderId });
     } catch (error) {
-        console.error('Error registering order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error("Error registering order:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+          db.release();
+        }
     }
 });
 
 router.get("/orders", authenticateToken, async (req, res) => {
+    let db;
+
     try {
-        const db = await connection();
-        const [results] = await db.execute(
-            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders ORDER BY timestamp_update DESC"
-        );
+        db = await connection();
+        const [results] = await db.execute(`
+            SELECT 
+                order_id, 
+                referenceNumber, 
+                customerName,
+                totalQuantity,
+                totalPrice,
+                orderPayment,
+                orderChange, 
+                user_id, 
+                DATE_FORMAT(timestamp_add, '%m/%d/%Y %h:%i %p') AS timestamp_add, 
+                DATE_FORMAT(timestamp_update, '%m/%d/%Y %h:%i %p') as timestamp_update 
+            FROM 
+                orders 
+            ORDER BY 
+                timestamp_add DESC
+        `);
         res.status(200).json(results);
     } catch (error) {
         console.error("Error loading orders:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
 router.get("/order/:id", authenticateToken, async (req, res) => {
     let order_id = req.params.id;
+    let db;
 
     if (!order_id) {
         return req
@@ -50,133 +192,119 @@ router.get("/order/:id", authenticateToken, async (req, res) => {
     }
 
     try {
-        const db = await connection();
-        const [results] = await db.execute(
-            "SELECT order_id, customer_id, product_id, orderQuantity, priceInTotal, orderStatus, user_id, DATE_FORMAT(timestamp_add, '%Y-%m-%d %h:%i %p') AS timestamp_add, DATE_FORMAT(timestamp_update, '%Y-%m-%d %h:%i %p') as timestamp_update FROM orders WHERE order_id = ?",
+        db = await connection();
+        const [results] = await db.execute(`
+            SELECT 
+                o.order_id,
+                o.customerName,
+                o.orderPayment,
+                o.orderChange,
+                o.referenceNumber,
+                o.orderReceipt,
+                od.productName,
+                od.productVariation,
+                od.orderQuantity,
+                od.orderDiscount,
+                od.subTotal,
+                o.totalQuantity,
+                o.totalPrice,
+                u.name,
+                p.productPrice,
+                DATE_FORMAT(o.timestamp_add, '%m/%d/%Y %h:%i %p') AS timestamp_add
+            FROM
+                orders o
+            JOIN
+                order_details od ON o.order_id = od.order_id
+            LEFT JOIN
+                users u ON o.user_id = u.user_id
+            LEFT JOIN
+                products p ON od.product_id = p.product_id
+            WHERE
+                o.order_id = ?`,
             [order_id]
         );
         res.status(200).json(results);
     } catch (error) {
         console.error("Error loading order:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
-router.put('/order/:id', authenticateToken, async (req, res) => {
+router.put('/order/:id', authenticateToken, uploadReceipt.single('orderReceipt'), async (req, res) => {
     let order_id = req.params.id;
-    const {customer_id, product_id, orderQuantity, orderStatus, user_id} = req.body;
-
-    if (!order_id || !customer_id || !product_id || !orderQuantity || !orderStatus || !user_id) {
-        return req.status(400).send({ error: user, message: 'Please provide customer_id, product_id, orderQuantity, orderStatus and user_id' });  
-    }
-
+    let db;
+    const orderReceipt = req.file ? req.file : null;
     try {
-        const db = await connection();
-        const updateUserQuery = 
-            "UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?";
-        await db.execute(updateUserQuery, [customer_id, product_id, orderQuantity, orderStatus, user_id, order_id]);
-  
-        const updatePriceQuery =
-            "UPDATE orders SET priceInTotal = orderQuantity * (SELECT productPrice FROM products WHERE product_id = ?) WHERE order_id = ?";
-        await db.execute(updatePriceQuery, [product_id, order_id]);
+        db = await connection();
+        const fetchOrderQuery = `
+            SELECT 
+                referenceNumber,
+                orderReceipt
+            FROM 
+                orders 
+            WHERE 
+                order_id = ?`;
+        const [currentOrder] = await db.execute(fetchOrderQuery, [order_id]);
+        if (currentOrder.length === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        const currentOrderReceipt = currentOrder[0].orderReceipt;
+        let referenceNumber = currentOrder[0].referenceNumber;
+        if (orderReceipt) {
+            const extension = path.extname(req.file.originalname);
+            const filename = `${referenceNumber}_${Date.now()}${extension}`;
+            const dir = path.join(__dirname, "../files/order-receipts/");
+            const filePath = path.join(dir, filename);
 
-        res.status(200).json({ message: "Order updated successfully" });
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+
+            if (currentOrderReceipt) {
+                const currentReceiptPath = path.join(dir, currentOrderReceipt);
+                fs.unlink(currentReceiptPath, (err) => {
+                    if (err) {
+                        console.error('Failed to delete existing receipt:', err);
+                    }
+                });
+            }
+
+            fs.writeFile(filePath, req.file.buffer, async (err) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Failed to save file' });
+                }
+
+                const updateOrderQuery = `
+                    UPDATE 
+                        orders 
+                    SET 
+                        orderReceipt = ?
+                    WHERE 
+                        order_id = ?`;
+                await db.execute(updateOrderQuery, [filename, order_id]);
+
+                res.status(200).json({ message: "Receipt upload success" });
+            });
+        } else {
+            res.status(400).json({ error: 'No receipt file uploaded' });
+        }
     } catch (error) {
-        console.error('Error loading order:', error);
+        console.error('Error uploading receipt:', error);
         res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
-
-// router.put('/order/:id', authenticateToken, async (req, res) => {
-//     const order_id = req.params.id;
-//     const { customer_id, product_id: newProductId, orderQuantity: newOrderQuantity, orderStatus, user_id } = req.body;
-
-//     if (!order_id || !customer_id || !newProductId || !newOrderQuantity || !orderStatus || !user_id) {
-//         return res.status(400).json({
-//             error: true,
-//             message: 'Please provide customer_id, product_id, orderQuantity, orderStatus, and user_id',
-//         });
-//     }
-
-//     const connection = await db.getConnection();
-
-//     try {
-//         // Start transaction
-//         await connection.beginTransaction();
-
-//         // Step 1: Retrieve the old product_id and orderQuantity
-//         const [oldOrder] = await connection.query(
-//             `SELECT product_id AS oldProductId, orderQuantity AS oldOrderQuantity FROM orders WHERE order_id = ?`,
-//             [order_id]
-//         );
-
-//         if (oldOrder.length === 0) {
-//             throw new Error('Order not found');
-//         }
-
-//         const { oldProductId, oldOrderQuantity } = oldOrder[0];
-
-//         // Step 2: Restore old product quantity only if the product_id has changed
-//         if (oldProductId !== newProductId) {
-//             await connection.query(
-//                 `UPDATE products SET productQuantity = productQuantity + ? WHERE product_id = ?`,
-//                 [oldOrderQuantity, oldProductId]
-//             );
-
-//             // Deduct the new order quantity from the new product
-//             await connection.query(
-//                 `UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?`,
-//                 [newOrderQuantity, newProductId]
-//             );
-//         } else {
-//             // Update the product quantity for the same product
-//             const quantityDifference = newOrderQuantity - oldOrderQuantity;
-//             await connection.query(
-//                 `UPDATE products SET productQuantity = productQuantity - ? WHERE product_id = ?`,
-//                 [quantityDifference, oldProductId]
-//             );
-//         }
-
-//         // Step 3: Update the order details
-//         await connection.query(
-//             `UPDATE orders SET customer_id = ?, product_id = ?, orderQuantity = ?, orderStatus = ?, user_id = ?, timestamp_update = NOW() WHERE order_id = ?`,
-//             [customer_id, newProductId, newOrderQuantity, orderStatus, user_id, order_id]
-//         );
-
-//         // Step 4: Recalculate and update the price
-//         const [newProduct] = await connection.query(
-//             `SELECT productPrice FROM products WHERE product_id = ?`,
-//             [newProductId]
-//         );
-
-//         if (newProduct.length === 0) {
-//             throw new Error('New product not found');
-//         }
-
-//         const newPriceInTotal = newOrderQuantity * newProduct[0].productPrice;
-
-//         await connection.query(
-//             `UPDATE orders SET priceInTotal = ? WHERE order_id = ?`,
-//             [newPriceInTotal, order_id]
-//         );
-
-//         // Commit the transaction
-//         await connection.commit();
-//         res.status(200).json({ message: 'Order updated successfully' });
-//     } catch (error) {
-//         // Rollback the transaction on error
-//         await connection.rollback();
-//         console.error('Error updating order:', error);
-//         res.status(500).json({ error: 'Internal Server Error' });
-//     } finally {
-//         // Release the connection
-//         connection.release();
-//     }
-// });
 
 router.delete("/order/:id", authenticateToken, async (req, res) => {
     let order_id = req.params.id;
-
+    let db;
     if (!order_id) {
         return res
         .status(400)
@@ -184,12 +312,16 @@ router.delete("/order/:id", authenticateToken, async (req, res) => {
     }
 
     try {
-        const db = await connection();
+        db = await connection();
         await db.execute("DELETE FROM orders WHERE order_id = ?", [order_id]);
         res.status(200).json({ message: "Order deleted successfully" });
     } catch (error) {
         console.error("Error deleting order:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+        if (db) {
+            db.release();
+        }
     }
 });
 
