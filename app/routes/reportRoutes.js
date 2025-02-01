@@ -32,8 +32,8 @@ router.get('/report/inventory', authenticateToken, async (req, res) => {
                 (SELECT product_id, COALESCE(SUM(purchaseQuantity), 0) AS PurchaseQ
                 FROM purchaseorders
                 GROUP BY product_id) po ON p.product_id = po.product_id
-            GROUP BY 
-                p.product_id, p.productName, p.productVariant, p.productCode, p.productType, p.productQuantity
+            -- GROUP BY 
+                -- p.product_id, p.productName, p.productVariant, p.productCode, p.productType, p.productQuantity
             ORDER BY
                 ProductType DESC, CAST(SUBSTRING_INDEX(Variant, '"', 1) AS UNSIGNED) ASC;
         `);
