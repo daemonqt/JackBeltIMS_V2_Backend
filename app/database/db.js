@@ -19,7 +19,7 @@ const pool = mysql.createPool({
   database: "sql12764749",
   port: "3306",
   timezone: "+08:00",
-  connectionLimit: 10,
+  connectionLimit: 200,
 });
 
 // Offline
