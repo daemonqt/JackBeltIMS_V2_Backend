@@ -10,6 +10,7 @@ router.post('/user/register', async (req, res) => {
     let db;
     try{
         db = await connection(); 
+        await db.beginTransaction();
         const {name, username, role_id, password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -36,9 +37,12 @@ router.post('/user/register', async (req, res) => {
             VALUES (?, ?, ?, ?)`;
         await db.execute(insertUserQuery, [name, username, role_id, hashedPassword]);
 
+        await db.commit();
         res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
-        
+        if (db) {
+            await db.rollback();
+        }
         console.error('Error registering user:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     } finally {
