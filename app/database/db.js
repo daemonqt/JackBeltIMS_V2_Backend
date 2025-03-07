@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
 // Online //Paid
 // const pool = mysql.createPool({
@@ -29,17 +29,11 @@ const pool = mysql.createPool({
 //   password: "",
 //   database: "jackbelt",
 //   timezone: "+08:00",
-//   connectionLimit: 10,
+//   connectionLimit: 200,
 // });
 
 const connection = async () => {
-  try {
-    const conn = await pool.promise().getConnection();
-    return conn;
-  } catch (error) {
-    console.log("Error getting database connection:", error);
-    throw error; 
-  }
+  return await pool.getConnection();
 };
 
 module.exports = connection;
