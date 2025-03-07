@@ -37,7 +37,7 @@ const connection = async () => {
     const conn = await pool.promise().getConnection();
     return conn;
   } catch (error) {
-    console.error("Error getting database connection:", error);
+    console.log("Error getting database connection:", error);
     throw error; 
   }
 };
