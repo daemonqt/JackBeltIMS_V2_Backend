@@ -11,13 +11,24 @@ const mysql = require('mysql2');
 //   connectionLimit: 200,
 // });
 
+// Online //Free 1
+// const db = mysql.createPool({
+//   host: "sql12.freesqldatabase.com",
+//   user: "sql12764749",
+//   password: "7FrIN3zZJs",
+//   database: "sql12764749",
+//   port: "3306",
+//   timezone: "+08:00",
+//   connectionLimit: 10,
+// });
+
 // Online //Free
 const db = mysql.createPool({
-  host: "sql12.freesqldatabase.com",
-  user: "sql12764749",
-  password: "7FrIN3zZJs",
-  database: "sql12764749",
-  port: "3306",
+  host: "6xjxa.h.filess.io",
+  user: "test_saildirtas",
+  password: "4361f8cd51b4ba11ac419201f0ea890aae753b92",
+  database: "test_saildirtas",
+  port: "3305",
   timezone: "+08:00",
   connectionLimit: 10,
 });
