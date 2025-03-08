@@ -21,7 +21,12 @@ const reportRoutes = require('./app/routes/reportRoutes.js');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+    origin: 'https://jackbeltimsv2.vercel.app/',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+}));
+
 app.use(bodyParser.json());
 app.use("/files", express.static(path.join(__dirname, "/app/files/")));
 
