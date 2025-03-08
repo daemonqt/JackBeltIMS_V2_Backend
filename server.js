@@ -26,6 +26,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }));
+app.options('*', cors());
 
 app.use(bodyParser.json());
 app.use("/files", express.static(path.join(__dirname, "/app/files/")));
