@@ -34,12 +34,22 @@ const mysql = require('mysql2');
 // });
 
 // Online //Google Cloud
+// const db = mysql.createPool({
+//   host: "34.92.104.235",
+//   user: "root",
+//   password: "jackbeltims2025",
+//   database: "jackbelt",
+//   port: "3306",
+//   timezone: "+08:00",
+// });
+
+// Online //TiDB
 const db = mysql.createPool({
-  host: "34.92.104.235",
-  user: "root",
-  password: "jackbeltims2025",
+  host: "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
+  user: "yXX8Rqy231y6Uv5.root",
+  password: "CQo1alIoiZk4kYAe",
   database: "jackbelt",
-  port: "3306",
+  port: "4000",
   timezone: "+08:00",
 });
 
