@@ -23,15 +23,15 @@ const mysql = require('mysql2');
 // });
 
 // Online //Free
-// const db = mysql.createPool({
-//   host: "6xjxa.h.filess.io",
-//   user: "test_saildirtas",
-//   password: "4361f8cd51b4ba11ac419201f0ea890aae753b92",
-//   database: "test_saildirtas",
-//   port: "3305",
-//   timezone: "+08:00",
-//   connectionLimit: 10,
-// });
+const db = mysql.createPool({
+  host: "6xjxa.h.filess.io",
+  user: "test_saildirtas",
+  password: "4361f8cd51b4ba11ac419201f0ea890aae753b92",
+  database: "test_saildirtas",
+  port: "3305",
+  timezone: "+08:00",
+  connectionLimit: 5,
+});
 
 // Online //Google Cloud
 // const db = mysql.createPool({
@@ -44,14 +44,14 @@ const mysql = require('mysql2');
 // });
 
 // Online //TiDB
-const db = mysql.createPool({
-  host: "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
-  user: "yXX8Rqy231y6Uv5.root",
-  password: "CQo1alIoiZk4kYAe",
-  database: "jackbelt",
-  port: "4000",
-  timezone: "+08:00",
-});
+// const db = mysql.createPool({
+//   host: "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
+//   user: "yXX8Rqy231y6Uv5.root",
+//   password: "CQo1alIoiZk4kYAe",
+//   database: "jackbelt",
+//   port: "4000",
+//   timezone: "+08:00",
+// });
 
 // Offline
 // const db = mysql.createPool({
