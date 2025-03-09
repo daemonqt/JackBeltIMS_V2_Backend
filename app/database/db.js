@@ -23,14 +23,24 @@ const mysql = require('mysql2');
 // });
 
 // Online //Free
+// const db = mysql.createPool({
+//   host: "6xjxa.h.filess.io",
+//   user: "test_saildirtas",
+//   password: "4361f8cd51b4ba11ac419201f0ea890aae753b92",
+//   database: "test_saildirtas",
+//   port: "3305",
+//   timezone: "+08:00",
+//   connectionLimit: 10,
+// });
+
+// Online //Google Cloud
 const db = mysql.createPool({
-  host: "6xjxa.h.filess.io",
-  user: "test_saildirtas",
-  password: "4361f8cd51b4ba11ac419201f0ea890aae753b92",
-  database: "test_saildirtas",
-  port: "3305",
+  host: "34.92.104.235",
+  user: "root",
+  password: "jackbeltims2025",
+  database: "jackbelt",
+  port: "3306",
   timezone: "+08:00",
-  connectionLimit: 10,
 });
 
 // Offline
